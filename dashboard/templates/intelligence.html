@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}Intelligence{% endblock %}
+
+{% block content %}
+{% set ioc_matches = data.get('ioc_matches', []) if data else [] %}
+
+<div class="page-title">
+  <h1>Threat Intelligence</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">IOCs · Feeds · Lookups</span>
+  <span class="page-title__sub text-mono">{{ ioc_matches | length }} IOC matches in last scan</span>
+</div>
+
+<!-- ══════════ MANUAL IOC LOOKUP FORM ══════════ -->
+<div class="panel mb-lg">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Manual IOC Lookup
+    </div>
+  </div>
+  <div class="panel__body">
+    <form onsubmit="runIocLookup(event)" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group" style="flex:1;min-width:240px;margin-bottom:0">
+        <label class="form-label" for="ioc-input">Indicator (IP / Domain / Hash / URL)</label>
+        <input class="form-control" id="ioc-input" type="text"
+               placeholder="e.g. 198.51.100.42, evil.example.com, d41d8cd98f00b204e9800998ecf8427e"
+               style="font-family:var(--font-data)">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">&nbsp;</label>
+        <button class="btn btn--primary" type="submit">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Lookup
+        </button>
+      </div>
+    </form>
+    <!-- Results area -->
+    <div id="ioc-result" style="margin-top:1rem;display:none">
+      <div class="panel" style="border-color:var(--border-accent)">
+        <div class="panel__body--compact" id="ioc-result-body">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ IOC MATCHES FROM LAST SCAN ══════════ -->
+<div class="panel mb-lg">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      IOC Matches — Last Scan
+    </div>
+    <span class="text-xs text-muted">{{ ioc_matches | length }} matches</span>
+  </div>
+  <div class="panel__body--flush" style="overflow-x:auto">
+    <table class="data-table" aria-label="IOC matches">
+      <thead>
+        <tr>
+          <th>Indicator</th>
+          <th>Type</th>
+          <th>Source</th>
+          <th>Category</th>
+          <th>Confidence</th>
+          <th>Malware Families</th>
+          <th>First Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ioc in ioc_matches | sort(attribute='confidence', reverse=True) %}
+        <tr>
+          <td class="text-mono text-xs text-cyan">{{ ioc.get('indicator', '—') }}</td>
+          <td class="text-mono text-xs">{{ ioc.get('indicator_type', '—') }}</td>
+          <td class="text-mono text-xs">{{ ioc.get('source', '—') }}</td>
+          <td>
+            {% set cat = ioc.get('category', 'unknown') | lower %}
+            <span class="badge badge--{{ 'danger' if 'c2' in cat or 'malware' in cat else ('warning' if 'suspicious' in cat else 'info') }}">
+              {{ ioc.get('category', '—') }}
+            </span>
+          </td>
+          <td class="text-mono text-xs">
+            <div style="display:flex;align-items:center;gap:0.4rem">
+              <div class="progress-bar-wrap" style="width:50px">
+                <div class="progress-bar-fill" style="width:{{ ioc.get('confidence', 0) }}%"></div>
+              </div>
+              {{ ioc.get('confidence', 0) }}%
+            </div>
+          </td>
+          <td class="text-xs">
+            {% for fam in ioc.get('malware_families', [])[:3] %}
+              <span class="badge badge--high" style="margin-right:2px">{{ fam }}</span>
+            {% endfor %}
+            {% if ioc.get('malware_families', []) | length == 0 %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-mono text-xs text-muted">{{ ioc.get('first_seen', '—') }}</td>
+        </tr>
+        {% else %}
+        <tr><td class="data-table__empty" colspan="7">No IOC matches in last scan</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ VT + OTX + AbuseIPDB RESULTS ══════════ -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+
+  <!-- OTX Pulse Feed -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        OTX Threat Pulses
+      </div>
+      <span class="text-xs text-muted">AlienVault OTX</span>
+    </div>
+    <div class="panel__body--compact ioc-table-wrap">
+      {% set otx_data = [] %}
+      {% if otx_data | length == 0 %}
+        <p class="text-muted text-xs" style="font-style:italic;padding:0.5rem 0">
+          Configure OTX_API_KEY in Settings to fetch live pulses.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- AbuseIPDB Results -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        AbuseIPDB Reports
+      </div>
+      <span class="text-xs text-muted">IP Reputation</span>
+    </div>
+    <div class="panel__body--compact ioc-table-wrap">
+      <p class="text-muted text-xs" style="font-style:italic;padding:0.5rem 0">
+        Configure ABUSEIPDB_API_KEY in Settings to query IP reputation scores.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ IOC DATABASE BROWSER ══════════ -->
+<div class="panel">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      Local IOC Database
+    </div>
+    <div class="panel__actions">
+      <input class="filter-input" type="text" id="ioc-db-search"
+             placeholder="Search indicators…" oninput="filterIocDb(this.value)" style="width:200px">
+    </div>
+  </div>
+  <div class="panel__body--flush">
+    <div class="ioc-table-wrap" style="overflow-x:auto">
+      <table class="data-table" id="ioc-db-table" aria-label="IOC database browser">
+        <thead>
+          <tr>
+            <th>Indicator</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Source</th>
+            <th>Confidence</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody id="ioc-db-tbody">
+          <!-- Populated via JS fetch from cached IOC DB -->
+          <tr><td colspan="6" class="data-table__empty">Loading IOC database…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  BS_Realtime.connect();
+  loadIocDatabase();
+});
+
+// ── IOC Lookup ────────────────────────────────────────────────────────────
+function runIocLookup(event) {
+  event.preventDefault();
+  const indicator = document.getElementById('ioc-input').value.trim();
+  if (!indicator) return;
+
+  const resultDiv  = document.getElementById('ioc-result');
+  const resultBody = document.getElementById('ioc-result-body');
+  resultDiv.style.display  = 'block';
+  resultBody.innerHTML = '<span style="color:var(--accent-cyan)">Looking up indicator…</span>';
+
+  // Fetch from scan results (in full implementation this would call a dedicated API endpoint)
+  fetch('/api/scan-results', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+      const iocMatches = (data.ioc_matches || []).filter(m =>
+        (m.indicator || '').toLowerCase() === indicator.toLowerCase()
+      );
+
+      if (iocMatches.length > 0) {
+        const m = iocMatches[0];
+        resultBody.innerHTML = `
+          <div style="font-family:var(--font-data)">
+            <div class="text-cyan" style="font-size:0.85rem;margin-bottom:0.5rem">${m.indicator}</div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:0.78rem">
+              <span><span class="text-muted">Type:</span> ${m.indicator_type}</span>
+              <span><span class="text-muted">Source:</span> ${m.source}</span>
+              <span><span class="text-muted">Confidence:</span> <strong style="color:var(--warning)">${m.confidence}%</strong></span>
+              <span><span class="text-muted">Category:</span> <strong style="color:var(--danger)">${m.category}</strong></span>
+            </div>
+            ${m.description ? `<p style="font-size:0.78rem;margin-top:0.5rem;color:var(--text-secondary)">${m.description}</p>` : ''}
+          </div>
+        `;
+      } else {
+        resultBody.innerHTML = `
+          <span class="text-ok text-xs" style="font-family:var(--font-data)">
+            ✓ ${indicator} — Not found in local IOC database (may still be malicious — configure API keys for live lookup)
+          </span>
+        `;
+      }
+    })
+    .catch(() => {
+      resultBody.innerHTML = '<span class="text-warn text-xs">Could not complete lookup — server error.</span>';
+    });
+}
+
+// ── IOC Database browser ──────────────────────────────────────────────────
+let _iocDbData = [];
+
+function loadIocDatabase() {
+  // Try to load from scan results or a dedicated endpoint
+  fetch('/api/scan-results', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+      _iocDbData = data.ioc_matches || [];
+      renderIocDb(_iocDbData);
+    })
+    .catch(() => {
+      document.getElementById('ioc-db-tbody').innerHTML =
+        '<tr><td colspan="6" class="data-table__empty">No IOC database available. Run a scan to populate.</td></tr>';
+    });
+}
+
+function renderIocDb(entries) {
+  const tbody = document.getElementById('ioc-db-tbody');
+  if (!tbody) return;
+  if (entries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="data-table__empty">No IOC entries — run a scan or add custom IOCs in config/custom_iocs.txt</td></tr>';
+    return;
+  }
+  tbody.innerHTML = entries.map(m => `
+    <tr>
+      <td class="text-mono text-xs text-cyan">${escapeHtml(m.indicator || '—')}</td>
+      <td class="text-mono text-xs">${escapeHtml(m.indicator_type || '—')}</td>
+      <td><span class="badge badge--${getBadgeClass(m.category)}">${escapeHtml(m.category || '—')}</span></td>
+      <td class="text-mono text-xs">${escapeHtml(m.source || '—')}</td>
+      <td class="text-mono text-xs">${m.confidence || 0}%</td>
+      <td class="text-xs text-muted">${escapeHtml((m.description || '').slice(0, 80))}</td>
+    </tr>
+  `).join('');
+}
+
+function filterIocDb(q) {
+  q = q.toLowerCase();
+  const filtered = !q ? _iocDbData : _iocDbData.filter(m =>
+    JSON.stringify(m).toLowerCase().includes(q)
+  );
+  renderIocDb(filtered);
+}
+
+function getBadgeClass(cat) {
+  cat = (cat || '').toLowerCase();
+  if (cat.includes('c2') || cat.includes('malware')) return 'critical';
+  if (cat.includes('suspicious')) return 'high';
+  if (cat.includes('spam') || cat.includes('abuse')) return 'medium';
+  return 'info';
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str || '');
+  return d.innerHTML;
+}
+</script>
+{% endblock %}

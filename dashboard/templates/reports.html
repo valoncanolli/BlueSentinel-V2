@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+
+<div class="page-title">
+  <h1>Scan Reports</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">{{ total }} report{{ 's' if total != 1 else '' }} saved</span>
+</div>
+
+{% if not reports %}
+<div style="display:flex;flex-direction:column;align-items:center;padding:60px 20px;color:#3a5570">
+  <div style="font-size:40px;margin-bottom:12px;opacity:0.4">&#128203;</div>
+  <div style="font-size:15px;color:#7a9ab8;margin-bottom:6px">No reports yet</div>
+  <div style="font-size:13px;text-align:center;line-height:1.7">
+    Run a scan to generate a report.<br>
+    Use the scan buttons on the <a href="/" style="color:#00d4ff;text-decoration:none">Overview</a> page.
+  </div>
+</div>
+{% else %}
+
+<div class="panel" style="overflow:hidden">
+  <div class="panel__body--flush" style="overflow-x:auto">
+    <table class="data-table" id="reportsTable" aria-label="Scan reports">
+      <thead>
+        <tr>
+          <th>Scan ID</th>
+          <th>Date &amp; Time</th>
+          <th>Host</th>
+          <th>Mode</th>
+          <th>Risk</th>
+          <th>Critical</th>
+          <th>High</th>
+          <th>Alerts</th>
+          <th>YARA</th>
+          <th>Size</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in reports %}
+      <tr>
+        <td class="text-mono text-xs">{{ r.scan_id or '---' }}</td>
+        <td class="text-xs">{{ r.timestamp[:19] | replace('T',' ') if r.timestamp else '---' }}</td>
+        <td class="text-mono text-xs">{{ r.hostname or '---' }}</td>
+        <td>
+          <span style="padding:2px 7px;border-radius:3px;font-size:0.65rem;background:#1a2d4a;color:#7a9ab8">
+            {{ r.scan_mode or '---' }}
+          </span>
+        </td>
+        <td>
+          <span style="padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:500;font-family:var(--font-data);
+            {% if r.risk_score >= 86 %}background:#ff3b5c22;color:#ff3b5c;border:1px solid #ff3b5c44
+            {% elif r.risk_score >= 61 %}background:#ff7c2a22;color:#ff7c2a;border:1px solid #ff7c2a44
+            {% elif r.risk_score >= 31 %}background:#ffb80022;color:#ffb800;border:1px solid #ffb80044
+            {% else %}background:#00ff8822;color:#00ff88;border:1px solid #00ff8844{% endif %}">
+            {{ r.risk_score }}/100
+          </span>
+        </td>
+        <td class="text-mono text-xs {% if r.critical_count > 0 %}text-danger{% endif %}">{{ r.critical_count }}</td>
+        <td class="text-mono text-xs {% if r.high_count > 0 %}text-warn{% endif %}">{{ r.high_count }}</td>
+        <td class="text-mono text-xs">{{ r.total_alerts }}</td>
+        <td class="text-mono text-xs">{{ r.yara_matches }}</td>
+        <td class="text-xs text-muted">{{ r.size_kb }} KB</td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <a href="{{ r.url }}" target="_blank"
+               style="padding:3px 8px;border-radius:4px;font-size:0.68rem;text-decoration:none;
+                      background:#00d4ff15;color:#00d4ff;border:1px solid #00d4ff44">View</a>
+            <a href="{{ r.url }}" download="{{ r.filename }}"
+               style="padding:3px 8px;border-radius:4px;font-size:0.68rem;text-decoration:none;
+                      background:#00ff8815;color:#00ff88;border:1px solid #00ff8844">&#8595;</a>
+            <button onclick="deleteReport('{{ r.filename }}')"
+                    style="padding:3px 8px;border-radius:4px;font-size:0.68rem;cursor:pointer;
+                           background:#ff3b5c15;color:#ff3b5c;border:1px solid #ff3b5c44">&#10005;</button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteReport(filename) {
+  if (!confirm('Delete report: ' + filename + '?')) return;
+  fetch('/api/reports/delete/' + encodeURIComponent(filename), {
+    method: 'DELETE',
+    credentials: 'same-origin'
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.success) {
+      if (typeof BS_Realtime !== 'undefined') {
+        BS_Realtime.showToast('Success', 'Report Deleted', filename, 3000);
+      }
+      setTimeout(function() { location.reload(); }, 600);
+    } else {
+      alert('Delete failed: ' + (d.error || 'unknown'));
+    }
+  });
+}
+</script>
+{% endblock %}

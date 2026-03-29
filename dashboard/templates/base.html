@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{% block title %}BlueSentinel v2.0{% endblock %} — SOC Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- Socket.IO -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <!-- Dashboard CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside class="sidebar" role="navigation" aria-label="Main navigation">
+
+    <div class="sidebar__brand">
+      <svg class="sidebar__brand-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- BlueSentinel Shield SVG logo -->
+        <path d="M20 2 L36 8 L36 22 C36 30 28 36 20 38 C12 36 4 30 4 22 L4 8 Z"
+              fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1.5"/>
+        <path d="M20 7 L32 12 L32 22 C32 28 26 33 20 35 C14 33 8 28 8 22 L8 12 Z"
+              fill="rgba(0,212,255,0.05)" stroke="#00a8cc" stroke-width="1"/>
+        <circle cx="20" cy="20" r="5" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+        <line x1="20" y1="12" x2="20" y2="15" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="20" y1="25" x2="20" y2="28" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="20" x2="15" y2="20" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="25" y1="20" x2="28" y2="20" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="20" cy="20" r="2" fill="#00d4ff"/>
+      </svg>
+      <div>
+        <div class="sidebar__brand-text">BLUE<span style="color:#e8f4ff">SENTINEL</span></div>
+        <div class="sidebar__brand-version">v2.0 — AI Threat Detection</div>
+      </div>
+    </div>
+
+    <nav class="sidebar__nav">
+      <div class="sidebar__section-label">Overview</div>
+
+      <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <div class="sidebar__section-label">Detection</div>
+
+      <a href="{{ url_for('alerts') }}" class="nav-item {% if request.endpoint == 'alerts' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="nav-label">Alerts</span>
+        <span class="nav-badge" id="nav-alerts-badge" style="display:none">0</span>
+      </a>
+
+      <a href="{{ url_for('network') }}" class="nav-item {% if request.endpoint == 'network' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/>
+        </svg>
+        <span class="nav-label">Network</span>
+      </a>
+
+      <a href="{{ url_for('files') }}" class="nav-item {% if request.endpoint == 'files' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span class="nav-label">Files &amp; YARA</span>
+      </a>
+
+      <a href="{{ url_for('mitre') }}" class="nav-item {% if request.endpoint == 'mitre' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="4" height="4"/><rect x="10" y="3" width="4" height="4"/><rect x="17" y="3" width="4" height="4"/>
+          <rect x="3" y="10" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="17" y="10" width="4" height="4"/>
+          <rect x="3" y="17" width="4" height="4"/><rect x="10" y="17" width="4" height="4"/><rect x="17" y="17" width="4" height="4"/>
+        </svg>
+        <span class="nav-label">MITRE ATT&amp;CK</span>
+      </a>
+
+      <a href="{{ url_for('reports_page') }}" class="nav-item {% if request.endpoint == 'reports_page' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
+        </svg>
+        <span class="nav-label">Reports</span>
+      </a>
+
+      <div class="sidebar__section-label">Intelligence</div>
+
+      <a href="{{ url_for('intelligence') }}" class="nav-item {% if request.endpoint == 'intelligence' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span class="nav-label">Intelligence</span>
+      </a>
+
+      <div class="sidebar__section-label">System</div>
+
+      <a href="{{ url_for('hardware') }}" class="nav-item {% if request.endpoint == 'hardware' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>
+          <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+          <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
+          <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/>
+          <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+        </svg>
+        <span class="nav-label">Hardware</span>
+      </a>
+
+      <a href="{{ url_for('settings') }}" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar__footer">
+      <div class="sidebar__status">
+        <span class="status-dot" id="rt-status-dot"></span>
+        <span class="sidebar__status-text" id="rt-status-label">Connecting…</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══════════ HEADER ══════════ -->
+  <header class="header" role="banner">
+    <!-- Brand icon (small, for narrow view) -->
+    <svg style="width:28px;height:28px;flex-shrink:0" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M20 2 L36 8 L36 22 C36 30 28 36 20 38 C12 36 4 30 4 22 L4 8 Z"
+            fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.5"/>
+      <circle cx="20" cy="20" r="5" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+      <circle cx="20" cy="20" r="2" fill="#00d4ff"/>
+    </svg>
+
+    <div class="header__hostname" title="Monitored host">
+      {{ hostname | default('localhost') }}
+    </div>
+
+    <div class="header__ai-badge" id="header-ai-badge" title="Active AI Provider">
+      {{ ai_provider | default('OPENAI') }}
+    </div>
+
+    <div class="header__scan-status" id="header-scan-status">
+      <span style="font-size:0.65rem;color:var(--text-muted)">SCAN STATUS</span>
+      <span id="header-scan-label" style="color:var(--success)">Idle</span>
+    </div>
+
+    <div class="header__spacer"></div>
+
+    <!-- Scan controls -->
+    <button class="header__btn header__btn--scan" onclick="document.getElementById('scan-modal').classList.add('active')" title="Start new scan">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      New Scan
+    </button>
+
+    <a class="header__btn" href="/api/export/json" title="Export scan data as JSON">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export
+    </a>
+
+    <!-- Notification Bell -->
+    <div class="notif-bell-wrapper" id="notifBellWrapper">
+      <button class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifDrawer()" title="Threat Notifications" aria-label="Threat Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+      </button>
+    </div>
+
+    <div class="header__clock" id="header-clock" aria-live="polite">00:00:00</div>
+  </header>
+
+  <!-- Notification Drawer -->
+  <div class="notif-drawer" id="notifDrawer" role="dialog" aria-label="Threat Notifications">
+    <div class="notif-drawer-header">
+      <span class="notif-drawer-title">Threat Notifications</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="notif-clear-btn" onclick="acknowledgeAll()">Acknowledge All</button>
+        <button class="notif-close-btn" onclick="toggleNotifDrawer()">✕</button>
+      </div>
+    </div>
+    <div class="notif-drawer-body" id="notifDrawerBody">
+      <div class="notif-empty" id="notifEmpty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <p>No threats detected</p>
+      </div>
+    </div>
+  </div>
+  <div class="notif-overlay" id="notifOverlay" onclick="toggleNotifDrawer()"></div>
+
+  <!-- ══════════ MAIN CONTENT ══════════ -->
+  <main class="main" id="main-content" role="main">
+
+    <!-- Scan progress overlay (shown during active scans) -->
+    <div class="scan-progress-panel" id="scan-progress-panel" role="status" aria-live="polite">
+      <div class="scan-progress-phase">
+        <span class="scan-progress-phase-name" id="scan-progress-phase">INITIALISING</span>
+        <span class="scan-progress-pct" id="scan-progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="scan-progress-bar" style="width:0%"></div>
+      </div>
+      <div style="margin-top:0.5rem;font-family:var(--font-data);font-size:0.72rem;color:var(--text-muted)">
+        Module: <span id="scan-progress-module">—</span>
+      </div>
+      <div id="scan-progress-file" style="display:none;margin-top:0.25rem;font-family:var(--font-data);font-size:0.68rem;color:#3a5570">
+      </div>
+    </div>
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ══════════ NEWS TICKER ══════════ -->
+  <footer class="news-ticker-bar" id="newsTickerBar" role="complementary" aria-label="Cybersecurity news feed" style="grid-area:ticker">
+    <div class="news-ticker-label">
+      <span class="news-label-icon">◉</span>
+      <span class="news-label-text">NEWS</span>
+    </div>
+    <div class="news-ticker-track-wrapper">
+      <div class="news-ticker-track" id="newsTickerTrack">
+        <span class="news-ticker-loading">Loading cybersecurity headlines…</span>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /shell -->
+
+<!-- ══════════ SCAN MODAL ══════════ -->
+<div class="modal-overlay" id="scan-modal" role="dialog" aria-modal="true" aria-labelledby="scan-modal-title"
+     onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal">
+    <div class="modal__header">
+      <h2 id="scan-modal-title" style="font-size:0.95rem">Start New Scan</h2>
+      <button class="modal__close" onclick="document.getElementById('scan-modal').classList.remove('active')" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <label class="form-label" for="scan-mode-select">Scan Mode</label>
+        <select class="form-control" id="scan-mode-select">
+          <option value="quick-scan">Quick Scan — Critical paths only (~2 min)</option>
+          <option value="full-scan">Full Scan — All modules (~5-10 min)</option>
+          <option value="network-only">Network Only — Beaconing + IOC check</option>
+          <option value="file-only">File Only — YARA + prefetch scan</option>
+        </select>
+      </div>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem">
+        Results will stream to the dashboard in real-time via Socket.IO.
+      </p>
+    </div>
+    <div class="modal__footer">
+      <button class="btn" onclick="document.getElementById('scan-modal').classList.remove('active')">Cancel</button>
+      <button class="btn btn--primary" onclick="
+        const mode = document.getElementById('scan-mode-select').value;
+        document.getElementById('scan-modal').classList.remove('active');
+        BS_Realtime.startScan(mode);
+      ">
+        Start Scan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container (injected by realtime.js) -->
+<div class="toast-container" id="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+<!-- ══════════ JAVASCRIPT ══════════ -->
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mitre_heatmap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/realtime.js') }}"></script>
+
+<script>
+  // ── Bootstrap real-time connection ──────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    BS_Realtime.connect();
+    BS_Realtime.startClock();
+
+    // Update progress percentage display alongside bar
+    const origSetProgress = window._setProgress;
+    document.addEventListener('scan_progress', function(e) {
+      const pctEl = document.getElementById('scan-progress-pct');
+      if (pctEl && e.detail) pctEl.textContent = e.detail.percent + '%';
+    });
+
+    // Update header scan status via Socket.IO events
+    const io_ = window.io ? io() : null;
+    if (io_) {
+      io_.on('scan_started', () => {
+        const lbl = document.getElementById('header-scan-label');
+        if (lbl) { lbl.textContent = 'Scanning…'; lbl.style.color = 'var(--warning)'; }
+      });
+      io_.on('scan_complete', () => {
+        const lbl = document.getElementById('header-scan-label');
+        if (lbl) { lbl.textContent = 'Idle'; lbl.style.color = 'var(--success)'; }
+      });
+    }
+  });
+</script>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

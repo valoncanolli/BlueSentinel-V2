@@ -1,0 +1,205 @@
+---
+# BlueSentinel v2.0 — Sigma Rules: Defense Evasion
+# References: MITRE ATT&CK TA0005
+# Author: Valon Canolli
+
+title: AMSI Bypass Attempt Detection
+id: bs-de-001
+status: stable
+description: |
+  Detects attempts to bypass the Antimalware Scan Interface (AMSI).
+  Adversaries patch amsi.dll in memory, use reflection, or call
+  AmsiScanBuffer/AmsiInitialize with bypass strings to disable AMSI
+  and execute malicious PowerShell or .NET code without detection.
+  Common bypass patterns are detected via PowerShell script block logging
+  and characteristic string patterns.
+references:
+  - https://attack.mitre.org/techniques/T1562/001/
+  - https://amsi.fail/
+  - https://github.com/rasta-mouse/AmsiScanBufferBypass
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.defense_evasion
+  - attack.t1562.001
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  product: windows
+  service: powershell
+  definition: Script Block Logging must be enabled (HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging)
+detection:
+  selection_amsi_bypass_strings:
+    EventID: 4104
+    ScriptBlockText|contains:
+      - 'AmsiScanBuffer'
+      - 'AmsiInitialize'
+      - 'amsiContext'
+      - 'amsiSession'
+      - '[Ref].Assembly.GetType'
+      - 'System.Management.Automation.AmsiUtils'
+      - 'amsiInitFailed'
+      - '[Runtime.InteropServices.Marshal]::Copy'
+  selection_reflection_bypass:
+    EventID: 4104
+    ScriptBlockText|contains|all:
+      - 'GetField'
+      - 'NonPublic'
+      - 'Static'
+  selection_encoded_bypass:
+    EventID: 4104
+    ScriptBlockText|contains:
+      - 'VirtualAlloc'
+      - 'VirtualProtect'
+      - 'WriteProcessMemory'
+  condition: selection_amsi_bypass_strings or (selection_reflection_bypass and selection_encoded_bypass)
+fields:
+  - ScriptBlockText
+  - Path
+  - User
+  - Computer
+falsepositives:
+  - Security research or red team exercises
+  - Legitimate software testing AMSI integration
+  - Security scanners enumerating AMSI providers
+level: critical
+---
+
+title: Windows Event Log Clearing Detection
+id: bs-de-002
+status: stable
+description: |
+  Detects clearing or disabling of Windows Event Logs, which adversaries perform
+  to destroy evidence of their activities. This includes using wevtutil.exe,
+  PowerShell Clear-EventLog, or directly calling the Windows API to clear logs.
+  Detection covers both the clearing action (Event 1102/104) and the process
+  execution patterns that indicate log tampering.
+references:
+  - https://attack.mitre.org/techniques/T1070/001/
+  - https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-1102
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.defense_evasion
+  - attack.t1070.001
+logsource:
+  product: windows
+  service: security
+detection:
+  selection_log_cleared:
+    EventID:
+      - 1102   # Security log cleared
+      - 104    # System log cleared
+  selection_wevtutil:
+    EventID: 4688
+    NewProcessName|endswith: '\wevtutil.exe'
+    CommandLine|contains:
+      - 'cl '
+      - 'clear-log'
+  selection_powershell_clear:
+    EventID: 4104
+    ScriptBlockText|contains:
+      - 'Clear-EventLog'
+      - 'Remove-EventLog'
+      - 'Limit-EventLog'
+      - '.ClearLog()'
+  selection_service_disabled:
+    EventID: 7036
+    ServiceName|contains:
+      - 'Windows Event Log'
+      - 'Wecsvc'
+    Status: 'stopped'
+  condition: selection_log_cleared or selection_wevtutil or selection_powershell_clear or selection_service_disabled
+fields:
+  - EventID
+  - SubjectUserName
+  - NewProcessName
+  - CommandLine
+  - ServiceName
+falsepositives:
+  - Legitimate log rotation or archiving by administrators
+  - Backup software clearing logs after archiving
+  - Forensic log cleanup in test environments
+level: high
+---
+
+title: Process Injection via DLL Injection Detection
+id: bs-de-003
+status: stable
+description: |
+  Detects DLL injection attacks used for defense evasion and privilege escalation.
+  Techniques include classic DLL injection (CreateRemoteThread + LoadLibrary),
+  reflective DLL injection, process hollowing, and DLL side-loading.
+  Indicators include suspicious API call sequences, writing to remote process
+  memory, and abnormal parent-child process relationships.
+references:
+  - https://attack.mitre.org/techniques/T1055/001/
+  - https://attack.mitre.org/techniques/T1055/002/
+  - https://attack.mitre.org/techniques/T1574/002/
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.defense_evasion
+  - attack.privilege_escalation
+  - attack.t1055
+  - attack.t1055.001
+  - attack.t1574.002
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_inject_api_sequence:
+    EventID: 4688
+    CommandLine|contains:
+      - 'VirtualAllocEx'
+      - 'WriteProcessMemory'
+      - 'CreateRemoteThread'
+      - 'NtCreateThreadEx'
+      - 'RtlCreateUserThread'
+      - 'QueueUserAPC'
+      - 'SetWindowsHookEx'
+  selection_suspicious_parent:
+    ParentImage|endswith:
+      - '\explorer.exe'
+      - '\svchost.exe'
+      - '\notepad.exe'
+      - '\mspaint.exe'
+      - '\calc.exe'
+      - '\wordpad.exe'
+    Image|endswith:
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+      - '\mshta.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+  selection_hollow_indicators:
+    EventID: 4688
+    CommandLine|contains:
+      - 'NtUnmapViewOfSection'
+      - 'ZwUnmapViewOfSection'
+      - 'NtCreateSection'
+      - 'MapViewOfSection'
+  filter_legitimate_rundll:
+    Image|endswith: '\rundll32.exe'
+    CommandLine|contains:
+      - 'shell32.dll'
+      - 'printui.dll'
+      - 'zipfldr.dll'
+  condition: (selection_inject_api_sequence or selection_hollow_indicators or selection_suspicious_parent) and not filter_legitimate_rundll
+fields:
+  - Image
+  - CommandLine
+  - ParentImage
+  - ParentCommandLine
+  - User
+  - Computer
+falsepositives:
+  - Security products (AV, EDR) using code injection for monitoring
+  - Debugging tools and dynamic analysis environments
+  - Legitimate software using reflective loading (e.g. commercial DRM)
+level: high

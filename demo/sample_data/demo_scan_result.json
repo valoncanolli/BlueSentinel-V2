@@ -1,0 +1,1393 @@
+{
+  "scan_id": "DEMO-CC233D00",
+  "hostname": "WINDOWS11",
+  "scan_mode": "full-scan",
+  "started_at": "2026-03-27T14:56:02.791388+00:00",
+  "completed_at": "2026-03-27T14:56:14.791390+00:00",
+  "duration_seconds": 12.4,
+  "threat_score": 94,
+  "risk_score": 94,
+  "total_alerts": 19,
+  "critical_count": 9,
+  "high_count": 9,
+  "medium_count": 1,
+  "low_count": 0,
+  "alerts": [
+    {
+      "alert_id": "f12a9871",
+      "alert_type": "yara_match",
+      "severity": "Critical",
+      "message": "Ransomware_Generic_NotePattern matched in C:\\Users\\Public\\Downloads\\invoice_2026.exe",
+      "mitre_technique": "T1486",
+      "timestamp": "2026-03-27T14:38:14.791293+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "33b5b4e1",
+      "alert_type": "yara_match",
+      "severity": "Critical",
+      "message": "CobaltStrike_Beacon_Config matched in C:\\Windows\\Temp\\csrss_helper.dll",
+      "mitre_technique": "T1055.012",
+      "timestamp": "2026-03-27T14:38:14.791306+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "5478d672",
+      "alert_type": "yara_match",
+      "severity": "High",
+      "message": "PowerShell_DownloadCradle matched in update.ps1",
+      "mitre_technique": "T1059.001",
+      "timestamp": "2026-03-27T14:42:14.791315+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "214eadfc",
+      "alert_type": "yara_match",
+      "severity": "High",
+      "message": "LOLBin_CertUtil_Decode matched in payload.b64",
+      "mitre_technique": "T1218",
+      "timestamp": "2026-03-27T14:52:14.791319+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "93c998f7",
+      "alert_type": "yara_match",
+      "severity": "Critical",
+      "message": "RAT_AsyncRAT_Strings matched in wuagent.exe",
+      "mitre_technique": "T1219",
+      "timestamp": "2026-03-27T14:29:14.791321+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "7be66bdb",
+      "alert_type": "yara_match",
+      "severity": "High",
+      "message": "Persistence_RunKey_Malware matched in svchost32.exe",
+      "mitre_technique": "T1547.001",
+      "timestamp": "2026-03-27T14:50:14.791324+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "24fc623e",
+      "alert_type": "yara_match",
+      "severity": "Medium",
+      "message": "DNS_Tunneling_Pattern matched in dns_tool.exe",
+      "mitre_technique": "T1071.004",
+      "timestamp": "2026-03-27T14:50:14.791326+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "eedf073b",
+      "alert_type": "yara_match",
+      "severity": "Critical",
+      "message": "Credential_Dumping_Strings matched in lsass_dump.exe",
+      "mitre_technique": "T1003.001",
+      "timestamp": "2026-03-27T14:27:14.791329+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "c82bf670",
+      "alert_type": "beaconing",
+      "severity": "Critical",
+      "message": "C2 beaconing detected: svchost.exe \u2192 185.220.101.45:4444 (60s intervals, 97% confidence)",
+      "mitre_technique": "T1071.001",
+      "timestamp": "2026-03-27T14:42:14.791332+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "388731df",
+      "alert_type": "beaconing",
+      "severity": "Critical",
+      "message": "Cobalt Strike beacon: rundll32.exe \u2192 192.168.100.200:443 (30s intervals, 89% confidence)",
+      "mitre_technique": "T1071.001",
+      "timestamp": "2026-03-27T14:47:14.791336+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "f70eec35",
+      "alert_type": "beaconing",
+      "severity": "High",
+      "message": "Tor beaconing: tor.exe \u2192 45.142.212.100:9050 (120s intervals, 78% confidence)",
+      "mitre_technique": "T1090.003",
+      "timestamp": "2026-03-27T14:48:14.791339+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "fd99bfb9",
+      "alert_type": "registry_persistence",
+      "severity": "High",
+      "message": "NEW Run key: WindowsSecurityUpdate \u2192 C:\\Users\\Public\\winsec.exe",
+      "mitre_technique": "T1547.001",
+      "timestamp": "2026-03-27T14:35:14.791342+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "902a45db",
+      "alert_type": "registry_persistence",
+      "severity": "Critical",
+      "message": "NEW Run key: OneDriveHelper \u2192 C:\\Windows\\Temp\\svchost32.exe",
+      "mitre_technique": "T1547.001",
+      "timestamp": "2026-03-27T14:29:14.791345+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "5f6a8b91",
+      "alert_type": "event_log",
+      "severity": "Critical",
+      "message": "EventID 4625: 847 failed logins in 10 minutes (brute force)",
+      "mitre_technique": "T1110",
+      "timestamp": "2026-03-27T14:37:14.791348+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "da6ef3a4",
+      "alert_type": "event_log",
+      "severity": "High",
+      "message": "EventID 4688: Suspicious process chain powershell \u2192 cmd \u2192 whoami",
+      "mitre_technique": "T1082",
+      "timestamp": "2026-03-27T14:39:14.791354+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "a84eb782",
+      "alert_type": "event_log",
+      "severity": "High",
+      "message": "EventID 4698: Malicious scheduled task 'WindowsDefenderUpdate' created",
+      "mitre_technique": "T1053.005",
+      "timestamp": "2026-03-27T14:48:14.791357+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "ea026f2b",
+      "alert_type": "event_log",
+      "severity": "Critical",
+      "message": "EventID 4720: New admin account 'helpdesk_admin' created",
+      "mitre_technique": "T1136.001",
+      "timestamp": "2026-03-27T14:40:14.791359+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "99c3d659",
+      "alert_type": "event_log",
+      "severity": "High",
+      "message": "EventID 4104: PowerShell IEX with base64 payload detected",
+      "mitre_technique": "T1059.001",
+      "timestamp": "2026-03-27T14:52:14.791362+00:00",
+      "acknowledged": false
+    },
+    {
+      "alert_id": "dbd9e121",
+      "alert_type": "event_log",
+      "severity": "High",
+      "message": "EventID 7045: New suspicious service 'NetBridge' installed",
+      "mitre_technique": "T1543.003",
+      "timestamp": "2026-03-27T14:54:14.791366+00:00",
+      "acknowledged": false
+    }
+  ],
+  "yara_matches": [
+    {
+      "rule_name": "Ransomware_Generic_NotePattern",
+      "file_path": "C:\\Users\\Public\\Downloads\\invoice_2026.exe",
+      "matched_strings": [
+        "YOUR FILES HAVE BEEN ENCRYPTED",
+        "bitcoin wallet"
+      ],
+      "severity": "Critical",
+      "mitre_technique": "T1486",
+      "alert_id": "f12a9871",
+      "alert_type": "yara_match",
+      "message": "Ransomware_Generic_NotePattern matched in C:\\Users\\Public\\Downloads\\invoice_2026.exe"
+    },
+    {
+      "rule_name": "CobaltStrike_Beacon_Config",
+      "file_path": "C:\\Windows\\Temp\\csrss_helper.dll",
+      "matched_strings": [
+        "beacon",
+        "\\x00\\x00\\x00\\x00\\xc8\\x00"
+      ],
+      "severity": "Critical",
+      "mitre_technique": "T1055.012",
+      "alert_id": "33b5b4e1",
+      "alert_type": "yara_match",
+      "message": "CobaltStrike_Beacon_Config matched in C:\\Windows\\Temp\\csrss_helper.dll"
+    },
+    {
+      "rule_name": "PowerShell_DownloadCradle",
+      "file_path": "C:\\Users\\psy\\AppData\\Roaming\\update.ps1",
+      "matched_strings": [
+        "IEX (New-Object Net.WebClient).DownloadString"
+      ],
+      "severity": "High",
+      "mitre_technique": "T1059.001",
+      "alert_id": "5478d672",
+      "alert_type": "yara_match",
+      "message": "PowerShell_DownloadCradle matched in update.ps1"
+    },
+    {
+      "rule_name": "LOLBin_CertUtil_Decode",
+      "file_path": "C:\\Windows\\Temp\\payload.b64",
+      "matched_strings": [
+        "certutil -decode",
+        "certutil.exe -urlcache"
+      ],
+      "severity": "High",
+      "mitre_technique": "T1218",
+      "alert_id": "214eadfc",
+      "alert_type": "yara_match",
+      "message": "LOLBin_CertUtil_Decode matched in payload.b64"
+    },
+    {
+      "rule_name": "RAT_AsyncRAT_Strings",
+      "file_path": "C:\\ProgramData\\WindowsUpdate\\wuagent.exe",
+      "matched_strings": [
+        "AsyncClient",
+        "Stub.exe",
+        "Server.crt"
+      ],
+      "severity": "Critical",
+      "mitre_technique": "T1219",
+      "alert_id": "93c998f7",
+      "alert_type": "yara_match",
+      "message": "RAT_AsyncRAT_Strings matched in wuagent.exe"
+    },
+    {
+      "rule_name": "Persistence_RunKey_Malware",
+      "file_path": "C:\\Users\\psy\\AppData\\Local\\Temp\\svchost32.exe",
+      "matched_strings": [
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+      ],
+      "severity": "High",
+      "mitre_technique": "T1547.001",
+      "alert_id": "7be66bdb",
+      "alert_type": "yara_match",
+      "message": "Persistence_RunKey_Malware matched in svchost32.exe"
+    },
+    {
+      "rule_name": "DNS_Tunneling_Pattern",
+      "file_path": "C:\\Windows\\System32\\dns_tool.exe",
+      "matched_strings": [
+        "dnscat",
+        "dns_tunnel"
+      ],
+      "severity": "Medium",
+      "mitre_technique": "T1071.004",
+      "alert_id": "24fc623e",
+      "alert_type": "yara_match",
+      "message": "DNS_Tunneling_Pattern matched in dns_tool.exe"
+    },
+    {
+      "rule_name": "Credential_Dumping_Strings",
+      "file_path": "C:\\Temp\\lsass_dump.exe",
+      "matched_strings": [
+        "lsass.exe",
+        "MiniDumpWriteDump",
+        "SeDebugPrivilege"
+      ],
+      "severity": "Critical",
+      "mitre_technique": "T1003.001",
+      "alert_id": "eedf073b",
+      "alert_type": "yara_match",
+      "message": "Credential_Dumping_Strings matched in lsass_dump.exe"
+    }
+  ],
+  "beaconing_alerts": [
+    {
+      "dst_ip": "185.220.101.45",
+      "dst_port": 4444,
+      "process": "svchost.exe",
+      "pid": 4421,
+      "confidence": 97,
+      "beacon_interval_s": 60.0,
+      "connection_count": 60,
+      "total_bytes": 614400,
+      "mitre_technique": "T1071.001",
+      "alert_id": "c82bf670",
+      "alert_type": "beaconing",
+      "severity": "Critical",
+      "message": "C2 beaconing detected: svchost.exe \u2192 185.220.101.45:4444 (60s intervals, 97% confidence)"
+    },
+    {
+      "dst_ip": "192.168.100.200",
+      "dst_port": 443,
+      "process": "rundll32.exe",
+      "pid": 7712,
+      "confidence": 89,
+      "beacon_interval_s": 30.0,
+      "connection_count": 120,
+      "total_bytes": 204800,
+      "mitre_technique": "T1071.001",
+      "alert_id": "388731df",
+      "alert_type": "beaconing",
+      "severity": "Critical",
+      "message": "Cobalt Strike beacon: rundll32.exe \u2192 192.168.100.200:443 (30s intervals, 89% confidence)"
+    },
+    {
+      "dst_ip": "45.142.212.100",
+      "dst_port": 9050,
+      "process": "tor.exe",
+      "pid": 5512,
+      "confidence": 78,
+      "beacon_interval_s": 120.0,
+      "connection_count": 30,
+      "total_bytes": 716800,
+      "mitre_technique": "T1090.003",
+      "alert_id": "f70eec35",
+      "alert_type": "beaconing",
+      "severity": "High",
+      "message": "Tor beaconing: tor.exe \u2192 45.142.212.100:9050 (120s intervals, 78% confidence)"
+    }
+  ],
+  "ioc_matches": [],
+  "connections": [
+    {
+      "remote_addr": "185.220.101.45",
+      "remote_port": 4444,
+      "local_addr": "192.168.1.100",
+      "local_port": 52341,
+      "process_name": "svchost.exe",
+      "pid": 4421,
+      "process_path": "C:\\Windows\\System32\\svchost.exe",
+      "status": "ESTABLISHED",
+      "classification": "malicious",
+      "classification_reason": "Metasploit default port",
+      "bytes_sent": 2048,
+      "bytes_recv": 8192,
+      "duration_seconds": 3600,
+      "beacon_confidence": 97,
+      "color": "#ff3b5c"
+    },
+    {
+      "remote_addr": "45.142.212.100",
+      "remote_port": 9050,
+      "local_addr": "192.168.1.100",
+      "local_port": 54212,
+      "process_name": "tor.exe",
+      "pid": 5512,
+      "process_path": "C:\\Users\\Public\\tor.exe",
+      "status": "ESTABLISHED",
+      "classification": "malicious",
+      "classification_reason": "Tor SOCKS proxy \u2014 anonymized C2 channel",
+      "bytes_sent": 512000,
+      "bytes_recv": 204800,
+      "duration_seconds": 1800,
+      "color": "#ff3b5c"
+    },
+    {
+      "remote_addr": "8.8.8.8",
+      "remote_port": 53,
+      "local_addr": "192.168.1.100",
+      "local_port": 49152,
+      "process_name": "dns_beacon.exe",
+      "pid": 6601,
+      "process_path": "C:\\Windows\\Temp\\dns_beacon.exe",
+      "status": "ESTABLISHED",
+      "classification": "suspicious",
+      "classification_reason": "High-frequency DNS queries \u2014 possible DNS tunneling",
+      "bytes_sent": 102400,
+      "bytes_recv": 51200,
+      "duration_seconds": 900,
+      "color": "#ffb800"
+    },
+    {
+      "remote_addr": "192.168.100.200",
+      "remote_port": 443,
+      "local_addr": "192.168.1.100",
+      "local_port": 55123,
+      "process_name": "rundll32.exe",
+      "pid": 7712,
+      "process_path": "C:\\Windows\\System32\\rundll32.exe",
+      "status": "ESTABLISHED",
+      "classification": "malicious",
+      "classification_reason": "rundll32 with suspicious C2 pattern \u2014 Cobalt Strike indicator",
+      "bytes_sent": 4096,
+      "bytes_recv": 16384,
+      "duration_seconds": 2400,
+      "beacon_confidence": 89,
+      "color": "#ff3b5c"
+    },
+    {
+      "remote_addr": "10.1.1.50",
+      "remote_port": 445,
+      "local_addr": "192.168.1.100",
+      "local_port": 49200,
+      "process_name": "cmd.exe",
+      "pid": 8823,
+      "process_path": "C:\\Windows\\System32\\cmd.exe",
+      "status": "ESTABLISHED",
+      "classification": "suspicious",
+      "classification_reason": "cmd.exe accessing remote SMB \u2014 possible lateral movement",
+      "bytes_sent": 1024,
+      "bytes_recv": 2048,
+      "duration_seconds": 120,
+      "color": "#ffb800"
+    },
+    {
+      "remote_addr": "203.0.113.42",
+      "remote_port": 1337,
+      "local_addr": "192.168.1.100",
+      "local_port": 51234,
+      "process_name": "powershell.exe",
+      "pid": 9934,
+      "process_path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "status": "ESTABLISHED",
+      "classification": "malicious",
+      "classification_reason": "PowerShell reverse shell on port 1337",
+      "bytes_sent": 8192,
+      "bytes_recv": 32768,
+      "duration_seconds": 600,
+      "color": "#ff3b5c"
+    },
+    {
+      "remote_addr": "198.51.100.77",
+      "remote_port": 21,
+      "local_addr": "192.168.1.100",
+      "local_port": 20001,
+      "process_name": "ftp.exe",
+      "pid": 1045,
+      "process_path": "C:\\Windows\\System32\\ftp.exe",
+      "status": "ESTABLISHED",
+      "classification": "suspicious",
+      "classification_reason": "Large FTP upload \u2014 potential data exfiltration (500 MB)",
+      "bytes_sent": 524288000,
+      "bytes_recv": 1024,
+      "duration_seconds": 1200,
+      "color": "#ffb800"
+    },
+    {
+      "remote_addr": "91.195.240.117",
+      "remote_port": 8080,
+      "local_addr": "192.168.1.100",
+      "local_port": 52100,
+      "process_name": "notepad.exe",
+      "pid": 2156,
+      "process_path": "C:\\Windows\\System32\\notepad.exe",
+      "status": "ESTABLISHED",
+      "classification": "malicious",
+      "classification_reason": "notepad.exe making HTTP connections \u2014 process injection indicator",
+      "bytes_sent": 512,
+      "bytes_recv": 4096,
+      "duration_seconds": 300,
+      "color": "#ff3b5c"
+    },
+    {
+      "remote_addr": "194.165.16.18",
+      "remote_port": 6667,
+      "local_addr": "192.168.1.100",
+      "local_port": 50001,
+      "process_name": "explorer.exe",
+      "pid": 3267,
+      "process_path": "C:\\Windows\\explorer.exe",
+      "status": "ESTABLISHED",
+      "classification": "malicious",
+      "classification_reason": "IRC connection from explorer.exe \u2014 botnet C2 indicator",
+      "bytes_sent": 256,
+      "bytes_recv": 1024,
+      "duration_seconds": 7200,
+      "color": "#ff3b5c"
+    },
+    {
+      "remote_addr": "172.16.200.5",
+      "remote_port": 31337,
+      "local_addr": "192.168.1.100",
+      "local_port": 49999,
+      "process_name": "winlogon.exe",
+      "pid": 4378,
+      "process_path": "C:\\Windows\\System32\\winlogon.exe",
+      "status": "ESTABLISHED",
+      "classification": "malicious",
+      "classification_reason": "Port 31337 (Back Orifice) from winlogon.exe",
+      "bytes_sent": 128,
+      "bytes_recv": 512,
+      "duration_seconds": 480,
+      "color": "#ff3b5c"
+    }
+  ],
+  "registry_persistence": [
+    {
+      "key": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "name": "WindowsSecurityUpdate",
+      "value": "C:\\Users\\Public\\winsec.exe /silent",
+      "status": "NEW",
+      "reason": "Executable in Public folder added to Run key",
+      "severity": "High",
+      "mitre_technique": "T1547.001",
+      "alert_id": "fd99bfb9",
+      "alert_type": "registry_persistence",
+      "message": "NEW Run key: WindowsSecurityUpdate \u2192 C:\\Users\\Public\\winsec.exe"
+    },
+    {
+      "key": "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "name": "OneDriveHelper",
+      "value": "C:\\Windows\\Temp\\svchost32.exe",
+      "status": "NEW",
+      "reason": "svchost32.exe (typosquatting svchost.exe) in Temp folder",
+      "severity": "Critical",
+      "mitre_technique": "T1547.001",
+      "alert_id": "902a45db",
+      "alert_type": "registry_persistence",
+      "message": "NEW Run key: OneDriveHelper \u2192 C:\\Windows\\Temp\\svchost32.exe"
+    }
+  ],
+  "event_anomalies": [
+    {
+      "event_id": 4625,
+      "count": 847,
+      "description": "847 failed login attempts in 10 minutes \u2014 brute force attack",
+      "severity": "Critical",
+      "mitre_technique": "T1110",
+      "alert_id": "5f6a8b91",
+      "alert_type": "event_log",
+      "message": "EventID 4625: 847 failed logins in 10 minutes (brute force)"
+    },
+    {
+      "event_id": 4688,
+      "process": "whoami.exe",
+      "parent": "cmd.exe",
+      "parent_parent": "powershell.exe",
+      "description": "Reconnaissance command chain: PowerShell \u2192 cmd \u2192 whoami",
+      "severity": "High",
+      "mitre_technique": "T1082",
+      "alert_id": "da6ef3a4",
+      "alert_type": "event_log",
+      "message": "EventID 4688: Suspicious process chain powershell \u2192 cmd \u2192 whoami"
+    },
+    {
+      "event_id": 4698,
+      "description": "New scheduled task: 'WindowsDefenderUpdate' runs C:\\Temp\\update.exe",
+      "severity": "High",
+      "mitre_technique": "T1053.005",
+      "alert_id": "a84eb782",
+      "alert_type": "event_log",
+      "message": "EventID 4698: Malicious scheduled task 'WindowsDefenderUpdate' created"
+    },
+    {
+      "event_id": 4720,
+      "description": "New local administrator account created: 'helpdesk_admin'",
+      "severity": "Critical",
+      "mitre_technique": "T1136.001",
+      "alert_id": "ea026f2b",
+      "alert_type": "event_log",
+      "message": "EventID 4720: New admin account 'helpdesk_admin' created"
+    },
+    {
+      "event_id": 4104,
+      "description": "PowerShell script block: IEX with base64-encoded payload",
+      "severity": "High",
+      "mitre_technique": "T1059.001",
+      "alert_id": "99c3d659",
+      "alert_type": "event_log",
+      "message": "EventID 4104: PowerShell IEX with base64 payload detected"
+    },
+    {
+      "event_id": 7045,
+      "description": "New service installed: 'NetBridge' \u2014 binary path in ProgramData",
+      "severity": "High",
+      "mitre_technique": "T1543.003",
+      "alert_id": "dbd9e121",
+      "alert_type": "event_log",
+      "message": "EventID 7045: New suspicious service 'NetBridge' installed"
+    }
+  ],
+  "mitre_coverage": {
+    "T1071.001": {
+      "tactic": "command-and-control",
+      "count": 4,
+      "severity": "Critical"
+    },
+    "T1055": {
+      "tactic": "defense-evasion",
+      "count": 2,
+      "severity": "Critical"
+    },
+    "T1486": {
+      "tactic": "impact",
+      "count": 1,
+      "severity": "Critical"
+    },
+    "T1003.001": {
+      "tactic": "credential-access",
+      "count": 1,
+      "severity": "Critical"
+    },
+    "T1059.001": {
+      "tactic": "execution",
+      "count": 2,
+      "severity": "High"
+    },
+    "T1547.001": {
+      "tactic": "persistence",
+      "count": 2,
+      "severity": "High"
+    },
+    "T1110": {
+      "tactic": "credential-access",
+      "count": 1,
+      "severity": "Critical"
+    },
+    "T1082": {
+      "tactic": "discovery",
+      "count": 1,
+      "severity": "High"
+    },
+    "T1053.005": {
+      "tactic": "persistence",
+      "count": 1,
+      "severity": "High"
+    },
+    "T1136.001": {
+      "tactic": "persistence",
+      "count": 1,
+      "severity": "Critical"
+    },
+    "T1090.003": {
+      "tactic": "command-and-control",
+      "count": 1,
+      "severity": "High"
+    },
+    "T1218": {
+      "tactic": "defense-evasion",
+      "count": 1,
+      "severity": "High"
+    },
+    "T1219": {
+      "tactic": "command-and-control",
+      "count": 1,
+      "severity": "Critical"
+    },
+    "T1041": {
+      "tactic": "exfiltration",
+      "count": 1,
+      "severity": "Medium"
+    },
+    "T1543.003": {
+      "tactic": "persistence",
+      "count": 1,
+      "severity": "High"
+    },
+    "T1071.004": {
+      "tactic": "command-and-control",
+      "count": 1,
+      "severity": "Medium"
+    },
+    "T1055.012": {
+      "tactic": "defense-evasion",
+      "count": 1,
+      "severity": "Critical"
+    }
+  },
+  "ai_provider_used": "openai",
+  "ai_summary": "CRITICAL BREACH DETECTED. Multiple indicators confirm active adversary control: Cobalt Strike C2 beacon via rundll32.exe, Metasploit reverse shell via svchost.exe, ransomware staging (invoice_2026.exe), credential dumping (lsass_dump.exe), 847 brute-force attempts, and a rogue administrator account. Immediate incident response is required. Isolate affected endpoints.",
+  "timeline": [
+    {
+      "time": "12:56",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "12:57",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "12:58",
+      "risk_score": 0,
+      "alert_count": 0
+    },
+    {
+      "time": "12:59",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "13:00",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:01",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:02",
+      "risk_score": 2,
+      "alert_count": 0
+    },
+    {
+      "time": "13:03",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:04",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "13:05",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "13:06",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:07",
+      "risk_score": 9,
+      "alert_count": 0
+    },
+    {
+      "time": "13:08",
+      "risk_score": 6,
+      "alert_count": 0
+    },
+    {
+      "time": "13:09",
+      "risk_score": 0,
+      "alert_count": 0
+    },
+    {
+      "time": "13:10",
+      "risk_score": 0,
+      "alert_count": 0
+    },
+    {
+      "time": "13:11",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:12",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:13",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:14",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "13:15",
+      "risk_score": 9,
+      "alert_count": 0
+    },
+    {
+      "time": "13:16",
+      "risk_score": 0,
+      "alert_count": 0
+    },
+    {
+      "time": "13:17",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "13:18",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:19",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "13:20",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "13:21",
+      "risk_score": 6,
+      "alert_count": 0
+    },
+    {
+      "time": "13:22",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:23",
+      "risk_score": 7,
+      "alert_count": 0
+    },
+    {
+      "time": "13:24",
+      "risk_score": 9,
+      "alert_count": 0
+    },
+    {
+      "time": "13:25",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "13:26",
+      "risk_score": 0,
+      "alert_count": 0
+    },
+    {
+      "time": "13:27",
+      "risk_score": 2,
+      "alert_count": 0
+    },
+    {
+      "time": "13:28",
+      "risk_score": 6,
+      "alert_count": 0
+    },
+    {
+      "time": "13:29",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "13:30",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "13:31",
+      "risk_score": 2,
+      "alert_count": 0
+    },
+    {
+      "time": "13:32",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:33",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "13:34",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:35",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:36",
+      "risk_score": 6,
+      "alert_count": 0
+    },
+    {
+      "time": "13:37",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:38",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "13:39",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "13:40",
+      "risk_score": 9,
+      "alert_count": 0
+    },
+    {
+      "time": "13:41",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "13:42",
+      "risk_score": 0,
+      "alert_count": 0
+    },
+    {
+      "time": "13:43",
+      "risk_score": 7,
+      "alert_count": 0
+    },
+    {
+      "time": "13:44",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "13:45",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:46",
+      "risk_score": 6,
+      "alert_count": 0
+    },
+    {
+      "time": "13:47",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:48",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "13:49",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "13:50",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "13:51",
+      "risk_score": 9,
+      "alert_count": 0
+    },
+    {
+      "time": "13:52",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "13:53",
+      "risk_score": 9,
+      "alert_count": 0
+    },
+    {
+      "time": "13:54",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:55",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "13:56",
+      "risk_score": 0,
+      "alert_count": 0
+    },
+    {
+      "time": "13:57",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "13:58",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "13:59",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "14:00",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "14:01",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "14:02",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "14:03",
+      "risk_score": 6,
+      "alert_count": 0
+    },
+    {
+      "time": "14:04",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "14:05",
+      "risk_score": 7,
+      "alert_count": 0
+    },
+    {
+      "time": "14:06",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "14:07",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "14:08",
+      "risk_score": 2,
+      "alert_count": 0
+    },
+    {
+      "time": "14:09",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "14:10",
+      "risk_score": 5,
+      "alert_count": 0
+    },
+    {
+      "time": "14:11",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "14:12",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "14:13",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "14:14",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "14:15",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "14:16",
+      "risk_score": 1,
+      "alert_count": 0
+    },
+    {
+      "time": "14:17",
+      "risk_score": 9,
+      "alert_count": 0
+    },
+    {
+      "time": "14:18",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "14:19",
+      "risk_score": 2,
+      "alert_count": 0
+    },
+    {
+      "time": "14:20",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "14:21",
+      "risk_score": 3,
+      "alert_count": 0
+    },
+    {
+      "time": "14:22",
+      "risk_score": 2,
+      "alert_count": 0
+    },
+    {
+      "time": "14:23",
+      "risk_score": 7,
+      "alert_count": 0
+    },
+    {
+      "time": "14:24",
+      "risk_score": 6,
+      "alert_count": 0
+    },
+    {
+      "time": "14:25",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "14:26",
+      "risk_score": 2,
+      "alert_count": 1
+    },
+    {
+      "time": "14:27",
+      "risk_score": 4,
+      "alert_count": 0
+    },
+    {
+      "time": "14:28",
+      "risk_score": 8,
+      "alert_count": 0
+    },
+    {
+      "time": "14:29",
+      "risk_score": 12,
+      "alert_count": 0
+    },
+    {
+      "time": "14:30",
+      "risk_score": 10,
+      "alert_count": 0
+    },
+    {
+      "time": "14:31",
+      "risk_score": 18,
+      "alert_count": 1
+    },
+    {
+      "time": "14:32",
+      "risk_score": 18,
+      "alert_count": 1
+    },
+    {
+      "time": "14:33",
+      "risk_score": 18,
+      "alert_count": 0
+    },
+    {
+      "time": "14:34",
+      "risk_score": 26,
+      "alert_count": 3
+    },
+    {
+      "time": "14:35",
+      "risk_score": 27,
+      "alert_count": 1
+    },
+    {
+      "time": "14:36",
+      "risk_score": 33,
+      "alert_count": 2
+    },
+    {
+      "time": "14:37",
+      "risk_score": 34,
+      "alert_count": 3
+    },
+    {
+      "time": "14:38",
+      "risk_score": 37,
+      "alert_count": 2
+    },
+    {
+      "time": "14:39",
+      "risk_score": 39,
+      "alert_count": 2
+    },
+    {
+      "time": "14:40",
+      "risk_score": 41,
+      "alert_count": 4
+    },
+    {
+      "time": "14:41",
+      "risk_score": 48,
+      "alert_count": 5
+    },
+    {
+      "time": "14:42",
+      "risk_score": 49,
+      "alert_count": 5
+    },
+    {
+      "time": "14:43",
+      "risk_score": 54,
+      "alert_count": 4
+    },
+    {
+      "time": "14:44",
+      "risk_score": 57,
+      "alert_count": 4
+    },
+    {
+      "time": "14:45",
+      "risk_score": 58,
+      "alert_count": 4
+    },
+    {
+      "time": "14:46",
+      "risk_score": 60,
+      "alert_count": 6
+    },
+    {
+      "time": "14:47",
+      "risk_score": 65,
+      "alert_count": 4
+    },
+    {
+      "time": "14:48",
+      "risk_score": 71,
+      "alert_count": 4
+    },
+    {
+      "time": "14:49",
+      "risk_score": 75,
+      "alert_count": 5
+    },
+    {
+      "time": "14:50",
+      "risk_score": 73,
+      "alert_count": 7
+    },
+    {
+      "time": "14:51",
+      "risk_score": 76,
+      "alert_count": 7
+    },
+    {
+      "time": "14:52",
+      "risk_score": 81,
+      "alert_count": 7
+    },
+    {
+      "time": "14:53",
+      "risk_score": 81,
+      "alert_count": 7
+    },
+    {
+      "time": "14:54",
+      "risk_score": 87,
+      "alert_count": 8
+    },
+    {
+      "time": "14:55",
+      "risk_score": 90,
+      "alert_count": 8
+    }
+  ],
+  "notifications": [
+    {
+      "id": "demo0001",
+      "timestamp": "2026-03-27T14:51:14.791092+00:00",
+      "severity": "critical",
+      "confidence": 97,
+      "title": "CRITICAL: svchost.exe connecting to Metasploit C2",
+      "description": "Process 'svchost.exe' (PID 4421) has established an outbound connection to 185.220.101.45:4444. Port 4444 is the Metasploit Framework default listener port. This is a strong indicator of active compromise.",
+      "technical_detail": "Remote: 185.220.101.45:4444 | Process: svchost.exe (PID 4421) | Path: C:\\Windows\\System32\\svchost.exe | Sent: 2,048 bytes | Recv: 8,192 bytes | Duration: 3600.0s",
+      "is_confirmed_breach": true,
+      "verdict_reason": "Port 4444 is a well-known indicator of Metasploit default listener. Legitimate software does not use this port. Immediate process termination recommended.",
+      "remote_ip": "185.220.101.45",
+      "remote_port": 4444,
+      "local_port": 52341,
+      "process_name": "svchost.exe",
+      "process_pid": 4421,
+      "process_path": "C:\\Windows\\System32\\svchost.exe",
+      "bytes_sent": 2048,
+      "bytes_recv": 8192,
+      "connection_duration": 3600.0,
+      "mitre_technique": "T1071.001",
+      "mitre_tactic": "Command and Control",
+      "can_kill_process": true,
+      "can_blacklist_ip": true,
+      "is_killed": false,
+      "is_blacklisted": false,
+      "is_acknowledged": false
+    },
+    {
+      "id": "demo0002",
+      "timestamp": "2026-03-27T14:53:14.791110+00:00",
+      "severity": "critical",
+      "confidence": 89,
+      "title": "CRITICAL: Cobalt Strike beacon \u2014 rundll32.exe",
+      "description": "rundll32.exe (PID 7712) is beaconing to 192.168.100.200:443 every 30 seconds. This matches the Cobalt Strike malleable C2 profile pattern. Process injection via rundll32 is a classic Cobalt Strike TTP.",
+      "technical_detail": "Remote: 192.168.100.200:443 | Process: rundll32.exe (PID 7712) | Beacon interval: 30s | Connections: 120 | Total bytes: 204,800",
+      "is_confirmed_breach": true,
+      "verdict_reason": "rundll32.exe making outbound HTTPS connections to an internal IP is highly anomalous. Beacon interval and jitter match Cobalt Strike defaults.",
+      "remote_ip": "192.168.100.200",
+      "remote_port": 443,
+      "local_port": 55123,
+      "process_name": "rundll32.exe",
+      "process_pid": 7712,
+      "process_path": "C:\\Windows\\System32\\rundll32.exe",
+      "bytes_sent": 4096,
+      "bytes_recv": 16384,
+      "connection_duration": 2400.0,
+      "mitre_technique": "T1071.001",
+      "mitre_tactic": "Command and Control",
+      "can_kill_process": true,
+      "can_blacklist_ip": true,
+      "is_killed": false,
+      "is_blacklisted": false,
+      "is_acknowledged": false
+    },
+    {
+      "id": "demo0003",
+      "timestamp": "2026-03-27T14:55:14.791115+00:00",
+      "severity": "malicious",
+      "confidence": 80,
+      "title": "Malicious traffic: notepad.exe making HTTP connections",
+      "description": "notepad.exe (PID 2156) is making HTTP connections to 91.195.240.117:8080. This is a strong indicator of process injection \u2014 notepad.exe is a common injection target. The destination IP is not a known legitimate service.",
+      "technical_detail": "Remote: 91.195.240.117:8080 | Process: notepad.exe (PID 2156) | Path: C:\\Windows\\System32\\notepad.exe | Duration: 300s",
+      "is_confirmed_breach": false,
+      "verdict_reason": "notepad.exe should never make network connections. This is almost certainly the result of shellcode injection. Investigate parent process and memory.",
+      "remote_ip": "91.195.240.117",
+      "remote_port": 8080,
+      "local_port": 52100,
+      "process_name": "notepad.exe",
+      "process_pid": 2156,
+      "process_path": "C:\\Windows\\System32\\notepad.exe",
+      "bytes_sent": 512,
+      "bytes_recv": 4096,
+      "connection_duration": 300.0,
+      "mitre_technique": "T1055",
+      "mitre_tactic": "Defense Evasion",
+      "can_kill_process": true,
+      "can_blacklist_ip": true,
+      "is_killed": false,
+      "is_blacklisted": false,
+      "is_acknowledged": false
+    },
+    {
+      "id": "demo0004",
+      "timestamp": "2026-03-27T14:56:14.791118+00:00",
+      "severity": "suspicious",
+      "confidence": 45,
+      "title": "Suspicious: Large FTP upload from ftp.exe",
+      "description": "ftp.exe (PID 1045) has uploaded ~500 MB to 198.51.100.77:21. This volume of outbound data over FTP may indicate data exfiltration. Verify whether this transfer was authorised.",
+      "technical_detail": "Remote: 198.51.100.77:21 | Process: ftp.exe (PID 1045) | Sent: 524,288,000 bytes (500 MB) | Recv: 1,024 bytes | Duration: 1200s",
+      "is_confirmed_breach": false,
+      "verdict_reason": "500 MB FTP upload is unusual for most environments. Medium probability of false positive if scheduled backup jobs exist.",
+      "remote_ip": "198.51.100.77",
+      "remote_port": 21,
+      "local_port": 20001,
+      "process_name": "ftp.exe",
+      "process_pid": 1045,
+      "process_path": "C:\\Windows\\System32\\ftp.exe",
+      "bytes_sent": 524288000,
+      "bytes_recv": 1024,
+      "connection_duration": 1200.0,
+      "mitre_technique": "T1041",
+      "mitre_tactic": "Exfiltration",
+      "can_kill_process": true,
+      "can_blacklist_ip": true,
+      "is_killed": false,
+      "is_blacklisted": false,
+      "is_acknowledged": false
+    }
+  ]
+}

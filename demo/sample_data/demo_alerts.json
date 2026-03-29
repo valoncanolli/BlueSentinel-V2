@@ -1,0 +1,173 @@
+[
+  {
+    "alert_id": "f12a9871",
+    "alert_type": "yara_match",
+    "severity": "Critical",
+    "message": "Ransomware_Generic_NotePattern matched in C:\\Users\\Public\\Downloads\\invoice_2026.exe",
+    "mitre_technique": "T1486",
+    "timestamp": "2026-03-27T14:38:14.791293+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "33b5b4e1",
+    "alert_type": "yara_match",
+    "severity": "Critical",
+    "message": "CobaltStrike_Beacon_Config matched in C:\\Windows\\Temp\\csrss_helper.dll",
+    "mitre_technique": "T1055.012",
+    "timestamp": "2026-03-27T14:38:14.791306+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "5478d672",
+    "alert_type": "yara_match",
+    "severity": "High",
+    "message": "PowerShell_DownloadCradle matched in update.ps1",
+    "mitre_technique": "T1059.001",
+    "timestamp": "2026-03-27T14:42:14.791315+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "214eadfc",
+    "alert_type": "yara_match",
+    "severity": "High",
+    "message": "LOLBin_CertUtil_Decode matched in payload.b64",
+    "mitre_technique": "T1218",
+    "timestamp": "2026-03-27T14:52:14.791319+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "93c998f7",
+    "alert_type": "yara_match",
+    "severity": "Critical",
+    "message": "RAT_AsyncRAT_Strings matched in wuagent.exe",
+    "mitre_technique": "T1219",
+    "timestamp": "2026-03-27T14:29:14.791321+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "7be66bdb",
+    "alert_type": "yara_match",
+    "severity": "High",
+    "message": "Persistence_RunKey_Malware matched in svchost32.exe",
+    "mitre_technique": "T1547.001",
+    "timestamp": "2026-03-27T14:50:14.791324+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "24fc623e",
+    "alert_type": "yara_match",
+    "severity": "Medium",
+    "message": "DNS_Tunneling_Pattern matched in dns_tool.exe",
+    "mitre_technique": "T1071.004",
+    "timestamp": "2026-03-27T14:50:14.791326+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "eedf073b",
+    "alert_type": "yara_match",
+    "severity": "Critical",
+    "message": "Credential_Dumping_Strings matched in lsass_dump.exe",
+    "mitre_technique": "T1003.001",
+    "timestamp": "2026-03-27T14:27:14.791329+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "c82bf670",
+    "alert_type": "beaconing",
+    "severity": "Critical",
+    "message": "C2 beaconing detected: svchost.exe \u2192 185.220.101.45:4444 (60s intervals, 97% confidence)",
+    "mitre_technique": "T1071.001",
+    "timestamp": "2026-03-27T14:42:14.791332+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "388731df",
+    "alert_type": "beaconing",
+    "severity": "Critical",
+    "message": "Cobalt Strike beacon: rundll32.exe \u2192 192.168.100.200:443 (30s intervals, 89% confidence)",
+    "mitre_technique": "T1071.001",
+    "timestamp": "2026-03-27T14:47:14.791336+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "f70eec35",
+    "alert_type": "beaconing",
+    "severity": "High",
+    "message": "Tor beaconing: tor.exe \u2192 45.142.212.100:9050 (120s intervals, 78% confidence)",
+    "mitre_technique": "T1090.003",
+    "timestamp": "2026-03-27T14:48:14.791339+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "fd99bfb9",
+    "alert_type": "registry_persistence",
+    "severity": "High",
+    "message": "NEW Run key: WindowsSecurityUpdate \u2192 C:\\Users\\Public\\winsec.exe",
+    "mitre_technique": "T1547.001",
+    "timestamp": "2026-03-27T14:35:14.791342+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "902a45db",
+    "alert_type": "registry_persistence",
+    "severity": "Critical",
+    "message": "NEW Run key: OneDriveHelper \u2192 C:\\Windows\\Temp\\svchost32.exe",
+    "mitre_technique": "T1547.001",
+    "timestamp": "2026-03-27T14:29:14.791345+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "5f6a8b91",
+    "alert_type": "event_log",
+    "severity": "Critical",
+    "message": "EventID 4625: 847 failed logins in 10 minutes (brute force)",
+    "mitre_technique": "T1110",
+    "timestamp": "2026-03-27T14:37:14.791348+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "da6ef3a4",
+    "alert_type": "event_log",
+    "severity": "High",
+    "message": "EventID 4688: Suspicious process chain powershell \u2192 cmd \u2192 whoami",
+    "mitre_technique": "T1082",
+    "timestamp": "2026-03-27T14:39:14.791354+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "a84eb782",
+    "alert_type": "event_log",
+    "severity": "High",
+    "message": "EventID 4698: Malicious scheduled task 'WindowsDefenderUpdate' created",
+    "mitre_technique": "T1053.005",
+    "timestamp": "2026-03-27T14:48:14.791357+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "ea026f2b",
+    "alert_type": "event_log",
+    "severity": "Critical",
+    "message": "EventID 4720: New admin account 'helpdesk_admin' created",
+    "mitre_technique": "T1136.001",
+    "timestamp": "2026-03-27T14:40:14.791359+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "99c3d659",
+    "alert_type": "event_log",
+    "severity": "High",
+    "message": "EventID 4104: PowerShell IEX with base64 payload detected",
+    "mitre_technique": "T1059.001",
+    "timestamp": "2026-03-27T14:52:14.791362+00:00",
+    "acknowledged": false
+  },
+  {
+    "alert_id": "dbd9e121",
+    "alert_type": "event_log",
+    "severity": "High",
+    "message": "EventID 7045: New suspicious service 'NetBridge' installed",
+    "mitre_technique": "T1543.003",
+    "timestamp": "2026-03-27T14:54:14.791366+00:00",
+    "acknowledged": false
+  }
+]

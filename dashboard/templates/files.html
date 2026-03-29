@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Files & YARA{% endblock %}
+
+{% block content %}
+
+{% if error_message is defined and error_message %}
+<div class="error-banner" style="background:rgba(255,59,92,0.12);border:1px solid #ff3b5c44;color:#ff3b5c;padding:0.75rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:0.85rem">
+  {{ error_message }}
+</div>
+{% endif %}
+
+{% if not has_data %}
+<div class="empty-state-panel" style="text-align:center;padding:3rem 1rem;color:var(--text-muted)">
+    <div style="font-size:2rem;margin-bottom:0.75rem">⬡</div>
+    <div style="font-size:1.1rem;font-weight:600;margin-bottom:0.5rem;color:var(--text-primary)">No file scan results</div>
+    <div style="font-size:0.85rem">
+        Run a scan: <code style="color:var(--accent-cyan)">.\main_launcher.ps1 -FileOnly</code><br>
+        Or <a href="javascript:loadDemoData()" style="color:var(--accent-cyan)">load demo data</a>
+        from the Overview page.
+    </div>
+</div>
+{% else %}
+
+<div class="page-title">
+  <h1>File &amp; YARA Analysis</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">Malware Detection</span>
+  <span class="page-title__sub text-mono">{{ yara_matches | length }} YARA matches</span>
+</div>
+
+<!-- KPI row -->
+<div class="kpi-grid mb-lg">
+  <div class="kpi-card">
+    <div class="kpi-card__label">YARA Matches</div>
+    <div class="kpi-card__value kpi-card__value--{{ 'danger' if yara_matches | length > 0 else 'success' }}">{{ yara_matches | length }}</div>
+    <div class="kpi-card__sub">Rule triggers</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-card__label">Critical</div>
+    <div class="kpi-card__value kpi-card__value--danger">{{ yara_matches | selectattr('severity', 'equalto', 'Critical') | list | length }}</div>
+    <div class="kpi-card__sub">Ransomware / RAT / Backdoor</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-card__label">Prefetch Anomalies</div>
+    <div class="kpi-card__value kpi-card__value--warning">{{ prefetch_anomalies | length }}</div>
+    <div class="kpi-card__sub">Suspicious executions</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-card__label">Unique Files</div>
+    <div class="kpi-card__value">{{ yara_matches | map(attribute='file_path') | select | unique | list | length }}</div>
+    <div class="kpi-card__sub">Affected paths</div>
+  </div>
+</div>
+
+{% endif %}
+
+<!-- ══════════ YARA MATCHES TABLE ══════════ -->
+<div class="panel mb-lg">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+      YARA Rule Matches
+    </div>
+    <div class="panel__actions">
+      <input class="filter-input" type="text" id="yara-search" placeholder="Filter by path or rule…"
+             oninput="filterYara(this.value)" style="width:200px">
+    </div>
+  </div>
+  <div class="panel__body--flush" style="overflow-x:auto">
+    <table class="data-table" id="yara-table" aria-label="YARA matches">
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Rule</th>
+          <th>File Path</th>
+          <th>Tags</th>
+          <th>MITRE</th>
+          <th>Matched Strings</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for match in (yara_matches or []) %}
+        {% set sev = match.get('severity', 'Medium') | lower %}
+        <tr class="yara-row" onclick="toggleYaraExpand(this)">
+          <td><span class="badge badge--{{ sev }}">{{ match.get('severity', 'Medium') }}</span></td>
+          <td class="text-mono text-xs text-cyan">{{ match.get('rule_name', match.get('rule', '—')) }}</td>
+          <td class="truncate text-mono text-xs" style="max-width:260px" title="{{ match.get('file_path', match.get('file', '')) }}">
+            {{ match.get('file_path', match.get('file', '—')) }}
+          </td>
+          <td>
+            {% for tag in match.get('rule_tags', match.get('tags', []))[:3] %}
+              <span class="badge badge--info" style="margin-right:2px">{{ tag }}</span>
+            {% endfor %}
+          </td>
+          <td class="text-mono text-xs text-cyan">{{ match.get('mitre_technique', '—') }}</td>
+          <td class="text-mono text-xs">
+            {{ match.get('matched_strings', []) | length }} string(s) matched
+            <span class="text-muted">(click to expand)</span>
+          </td>
+        </tr>
+        <!-- Expanded hex strings row -->
+        <tr class="data-table__expand yara-expand-row" style="display:none">
+          <td colspan="6">
+            <div style="padding:0.5rem 0">
+              <div class="text-xs text-muted mb-md text-mono">Matched Strings (hex-highlighted):</div>
+              {% if match.get('matched_strings') %}
+                {% for s in match.get('matched_strings', [])[:10] %}
+                  {% if s is mapping %}
+                  <div style="margin-bottom:0.5rem">
+                    <span class="text-mono text-xs text-cyan" style="margin-right:0.5rem">{{ s.get('identifier', '$?') }}</span>
+                    <span class="text-mono text-xs text-muted">+0x{{ '%x' % (s.get('offset') or 0) }}:</span>
+                    <div class="hex-highlight" style="margin-top:0.25rem">
+                      <span class="hex-match">{{ s.get('data', '') | upper }}</span>
+                    </div>
+                  </div>
+                  {% else %}
+                  <div style="margin-bottom:0.5rem">
+                    <div class="hex-highlight" style="margin-top:0.25rem">
+                      <span class="hex-match">{{ s | string | upper }}</span>
+                    </div>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              {% else %}
+                <span class="text-muted text-xs">No string details available.</span>
+              {% endif %}
+
+              <!-- VT lookup link -->
+              {% if match.get('file_path') or match.get('file') %}
+              <div style="margin-top:0.75rem">
+                <a class="btn btn--sm btn--primary" href="/api/scan-results" title="VirusTotal lookup">
+                  View Full Report
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="data-table__empty" colspan="6">No YARA matches — all scanned files appear clean</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ PREFETCH ANOMALIES ══════════ -->
+<div class="panel mb-lg">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Prefetch Anomalies
+    </div>
+    <div class="panel__actions text-xs text-muted">Unusual binary executions from prefetch cache</div>
+  </div>
+  <div class="panel__body--flush" style="overflow-x:auto">
+    <table class="data-table" aria-label="Prefetch anomalies">
+      <thead>
+        <tr>
+          <th>Executable</th>
+          <th>Path</th>
+          <th>Last Run</th>
+          <th>Run Count</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pf in (prefetch_anomalies or []) %}
+        <tr>
+          <td class="text-mono text-xs text-cyan">{{ pf.get('name', '—') }}</td>
+          <td class="text-mono text-xs truncate" style="max-width:240px">{{ pf.get('path', '—') }}</td>
+          <td class="text-mono text-xs text-muted">{{ pf.get('last_run', '—') }}</td>
+          <td class="text-mono text-xs">{{ pf.get('run_count', '—') }}</td>
+          <td>
+            {% if pf.get('reason') %}
+              <span class="badge badge--warning">{{ pf['reason'] }}</span>
+            {% else %}
+              <span class="text-muted text-xs">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="data-table__empty" colspan="5">No prefetch anomalies detected</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ HASH LOOKUP ══════════ -->
+<div class="panel">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      VirusTotal Hash Lookup
+    </div>
+  </div>
+  <div class="panel__body">
+    <div class="ioc-form" style="border:none;padding:0;margin-bottom:1rem">
+      <input class="form-control" type="text" id="hash-input"
+             placeholder="Enter MD5 / SHA1 / SHA256 hash…" style="font-family:var(--font-data)">
+      <button class="btn btn--primary" onclick="lookupHash()">Lookup</button>
+    </div>
+    <div id="hash-result" style="font-family:var(--font-data);font-size:0.78rem;color:var(--text-muted);font-style:italic">
+      Enter a file hash above to query VirusTotal.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  BS_Realtime.connect();
+});
+
+// YARA row expand
+function toggleYaraExpand(row) {
+  const expandRow = row.nextElementSibling;
+  if (!expandRow || !expandRow.classList.contains('yara-expand-row')) return;
+  const visible = expandRow.style.display !== 'none';
+  expandRow.style.display = visible ? 'none' : 'table-row';
+  row.classList.toggle('expanded', !visible);
+}
+
+// YARA filter
+function filterYara(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.yara-row').forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = (!q || text.includes(q)) ? '' : 'none';
+    // Also hide expand row when parent is hidden
+    const exp = row.nextElementSibling;
+    if (exp && exp.classList.contains('yara-expand-row')) {
+      if (row.style.display === 'none') exp.style.display = 'none';
+    }
+  });
+}
+
+// Hash lookup stub (real implementation would call /api via JS)
+function lookupHash() {
+  const hash = document.getElementById('hash-input').value.trim();
+  if (!hash) return;
+  const resultEl = document.getElementById('hash-result');
+  resultEl.innerHTML = '<span style="color:var(--accent-cyan)">Looking up hash…</span>';
+  // In a full implementation this would call a /api/vt-lookup?hash=... endpoint
+  setTimeout(() => {
+    resultEl.innerHTML = `<span style="color:var(--text-muted)">Hash lookup for <code style="color:var(--accent-cyan)">${hash.slice(0,16)}…</code> — configure VirusTotal API key in Settings to enable live lookups.</span>`;
+  }, 800);
+}
+</script>
+{% endblock %}

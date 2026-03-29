@@ -1,0 +1,177 @@
+---
+# BlueSentinel v2.0 — Sigma Rules: Privilege Escalation
+# References: MITRE ATT&CK TA0004
+# Author: Valon Canolli
+
+title: Access Token Manipulation — Token Impersonation
+id: bs-pe-001
+status: stable
+description: |
+  Detects token impersonation attacks where adversaries duplicate or steal
+  access tokens from higher-privileged processes. This technique enables
+  privilege escalation by running code under the context of another user,
+  including SYSTEM or domain administrator accounts.
+references:
+  - https://attack.mitre.org/techniques/T1134/
+  - https://attack.mitre.org/techniques/T1134/001/
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.privilege_escalation
+  - attack.defense_evasion
+  - attack.t1134
+  - attack.t1134.001
+logsource:
+  product: windows
+  service: security
+detection:
+  selection_token_adjust:
+    EventID: 4703
+    EnabledPrivilegeList|contains:
+      - 'SeImpersonatePrivilege'
+      - 'SeAssignPrimaryTokenPrivilege'
+      - 'SeCreateTokenPrivilege'
+      - 'SeTcbPrivilege'
+  filter_system_accounts:
+    SubjectUserSid:
+      - 'S-1-5-18'   # SYSTEM
+      - 'S-1-5-19'   # LOCAL SERVICE
+      - 'S-1-5-20'   # NETWORK SERVICE
+  selection_api_calls:
+    EventID: 4688
+    NewProcessName|contains:
+      - '\cmd.exe'
+      - '\powershell.exe'
+    CommandLine|contains:
+      - 'ImpersonateLoggedOnUser'
+      - 'DuplicateTokenEx'
+      - 'SetThreadToken'
+  condition: (selection_token_adjust and not filter_system_accounts) or selection_api_calls
+fields:
+  - SubjectUserName
+  - SubjectUserSid
+  - EnabledPrivilegeList
+  - ProcessName
+  - CommandLine
+falsepositives:
+  - Legitimate security software using token manipulation APIs
+  - Administrative tools that legitimately use impersonation
+  - IIS application pools using impersonation
+level: high
+---
+
+title: UAC Bypass Detection
+id: bs-pe-002
+status: stable
+description: |
+  Detects User Account Control (UAC) bypass techniques. Adversaries use UAC
+  bypasses to elevate privileges without triggering the UAC prompt, typically
+  via auto-elevation, DLL hijacking in trusted directories, or COM object abuse.
+  Common bypass binaries include eventvwr.exe, fodhelper.exe, and sdclt.exe.
+references:
+  - https://attack.mitre.org/techniques/T1548/002/
+  - https://github.com/hfiref0x/UACME
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.privilege_escalation
+  - attack.defense_evasion
+  - attack.t1548.002
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_uac_bypass_binaries:
+    Image|endswith:
+      - '\eventvwr.exe'
+      - '\fodhelper.exe'
+      - '\sdclt.exe'
+      - '\cmstp.exe'
+      - '\mmc.exe'
+      - '\wsreset.exe'
+    IntegrityLevel: High
+    ParentIntegrityLevel: Medium
+  selection_registry_hijack:
+    EventID: 13  # RegistryEvent — Value Set
+    TargetObject|contains:
+      - 'HKCU\Software\Classes\ms-settings\shell\open\command'
+      - 'HKCU\Software\Classes\Folder\shell\open\command'
+      - 'HKCU\Software\Classes\mscfile\shell\open\command'
+      - 'HKCU\Software\Classes\exefile\shell\open\command'
+  selection_powershell_bypass:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - 'fodhelper'
+      - 'eventvwr'
+      - 'sdclt'
+      - 'cmstp'
+      - '-WindowStyle Hidden'
+  condition: selection_uac_bypass_binaries or selection_registry_hijack or selection_powershell_bypass
+fields:
+  - Image
+  - CommandLine
+  - ParentImage
+  - IntegrityLevel
+  - User
+falsepositives:
+  - Legitimate use of these binaries by administrators
+  - Software installers that trigger UAC elevation
+level: high
+---
+
+title: Named Pipe Impersonation for Privilege Escalation
+id: bs-pe-003
+status: stable
+description: |
+  Detects privilege escalation via named pipe impersonation. Adversaries create
+  a named pipe server, trick a high-privileged process into connecting as a client,
+  then call ImpersonateNamedPipeClient() to steal the token. Commonly used by
+  exploits like JuicyPotato, PrintSpoofer, and RoguePotato.
+references:
+  - https://attack.mitre.org/techniques/T1134/001/
+  - https://itm4n.github.io/printspoofer-abusing-impersonate-privileges/
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.privilege_escalation
+  - attack.t1134.001
+  - attack.t1055
+logsource:
+  product: windows
+  category: pipe_created
+detection:
+  selection_suspicious_pipes:
+    PipeName|contains:
+      - '\pipe\spoolss'
+      - '\pipe\efsrpc'
+      - '\pipe\lsarpc'
+      - '\pipe\samr'
+      - '\pipe\netlogon'
+  selection_impersonation_tools:
+    Image|contains:
+      - 'JuicyPotato'
+      - 'PrintSpoofer'
+      - 'RoguePotato'
+      - 'SweetPotato'
+      - 'GodPotato'
+  selection_exploit_indicator:
+    EventID: 4688
+    CommandLine|contains:
+      - '\pipe\'
+      - 'ImpersonateNamedPipeClient'
+      - '-p cmd'
+      - '-c "{{'
+  condition: selection_suspicious_pipes or selection_impersonation_tools or selection_exploit_indicator
+fields:
+  - PipeName
+  - Image
+  - CommandLine
+  - User
+  - Computer
+falsepositives:
+  - Legitimate applications communicating via named pipes
+  - Antivirus or EDR products monitoring pipe activity
+level: critical

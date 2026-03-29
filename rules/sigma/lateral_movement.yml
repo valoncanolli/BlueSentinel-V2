@@ -1,0 +1,155 @@
+---
+# BlueSentinel v2.0 — Sigma Rules: Lateral Movement
+# References: MITRE ATT&CK TA0008
+# Author: Valon Canolli
+
+title: Pass-the-Hash Attack Detection
+id: bs-lm-001
+status: stable
+description: |
+  Detects Pass-the-Hash (PtH) attacks where an adversary authenticates using
+  NTLM hashes without knowledge of the plaintext password. Indicators include
+  logon type 3 (network) with NTLM authentication from a non-domain controller
+  and an anomalous source workstation.
+references:
+  - https://attack.mitre.org/techniques/T1550/002/
+  - https://www.sans.org/blog/pass-the-hash-attacks/
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.lateral_movement
+  - attack.t1550.002
+  - attack.credential_access
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4624
+    LogonType: 3
+    AuthenticationPackageName: NTLM
+    WorkstationName|not_contains:
+      - '-DC'
+      - 'DC01'
+      - 'DC02'
+  filter_anonymous:
+    SubjectUserName: 'ANONYMOUS LOGON'
+  filter_machine_account:
+    TargetUserName|endswith: '$'
+  condition: selection and not filter_anonymous and not filter_machine_account
+fields:
+  - SubjectUserName
+  - TargetUserName
+  - WorkstationName
+  - IpAddress
+  - LogonType
+falsepositives:
+  - Legitimate network logons using NTLM on workstations
+  - Service accounts using NTLM authentication
+level: high
+---
+
+title: PsExec Remote Execution Detection
+id: bs-lm-002
+status: stable
+description: |
+  Detects remote process execution via PsExec or PsExec-like tools.
+  Adversaries use PsExec for lateral movement by executing commands on
+  remote systems over SMB. Detection is based on the creation of the
+  PSEXESVC service and characteristic named pipe patterns.
+references:
+  - https://attack.mitre.org/techniques/T1021/002/
+  - https://docs.microsoft.com/en-us/sysinternals/downloads/psexec
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.lateral_movement
+  - attack.t1021.002
+  - attack.t1570
+logsource:
+  product: windows
+  service: system
+detection:
+  selection_service:
+    EventID: 7045
+    ServiceName|contains:
+      - 'PSEXESVC'
+      - 'psexec'
+      - 'remcom'
+    ServiceFileName|contains:
+      - 'PSEXESVC'
+      - '\ADMIN$'
+  selection_named_pipe:
+    EventID: 5145
+    ShareName: '\\*\IPC$'
+    RelativeTargetName|contains:
+      - 'PSEXESVC'
+      - 'paexec'
+      - 'remcom'
+  condition: selection_service or selection_named_pipe
+fields:
+  - ServiceName
+  - ServiceFileName
+  - Computer
+  - User
+falsepositives:
+  - Legitimate administrative use of PsExec by IT staff
+  - Automated deployment tools using PsExec-compatible mechanisms
+level: high
+---
+
+title: WMI Lateral Movement Detection
+id: bs-lm-003
+status: stable
+description: |
+  Detects adversaries using Windows Management Instrumentation (WMI) for
+  lateral movement. This includes creating remote processes via WMI, using
+  wmic.exe with remote targets, or WMI event subscription abuse for persistence
+  combined with lateral movement patterns.
+references:
+  - https://attack.mitre.org/techniques/T1047/
+  - https://attack.mitre.org/techniques/T1021/003/
+author: Valon Canolli
+date: 2024-01-01
+modified: 2024-01-01
+tags:
+  - attack.lateral_movement
+  - attack.execution
+  - attack.t1047
+  - attack.t1021.003
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_wmic_remote:
+    Image|endswith: '\wmic.exe'
+    CommandLine|contains:
+      - '/node:'
+      - 'process call create'
+      - 'call create'
+  selection_wmi_spawn:
+    ParentImage|endswith: '\WmiPrvSE.exe'
+    Image|contains:
+      - '\cmd.exe'
+      - '\powershell.exe'
+      - '\cscript.exe'
+      - '\wscript.exe'
+      - '\mshta.exe'
+      - '\regsvr32.exe'
+  filter_legitimate:
+    User|contains: 'NT AUTHORITY\SYSTEM'
+    CommandLine|contains: 'ManagementObject'
+  condition: (selection_wmic_remote or selection_wmi_spawn) and not filter_legitimate
+fields:
+  - Image
+  - CommandLine
+  - ParentImage
+  - User
+  - Computer
+falsepositives:
+  - Legitimate remote administration via WMI
+  - SCCM or other management platforms using WMI
+  - Monitoring agents spawning from WmiPrvSE
+level: high

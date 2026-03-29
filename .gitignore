@@ -1,0 +1,48 @@
+# ════════════════════════════════════════════════════════════
+# BlueSentinel V2.0 — .gitignore
+# ════════════════════════════════════════════════════════════
+
+# ── Secrets & Credentials ─────────────────────────────────────
+.env
+config/.env
+config/dashboard.crt
+config/dashboard.key
+*.pem
+*.p12
+*.pfx
+
+# ── Python Bytecode ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+
+# ── Virtual Environments ──────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Generated Output (reports, cache, logs) ───────────────────
+reports/BlueSentinel_*.html
+reports/BlueSentinel_*.json
+reports/BlueSentinel_*.pdf
+reports/*.ndjson
+reports/*.cef
+cache/*.json
+logs/
+!logs/.gitkeep
+*.log
+
+# ── Auto-generated Config ─────────────────────────────────────
+config/integrity_manifest.json
+
+# ── Test & Coverage Artifacts ─────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── IDE & OS ──────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

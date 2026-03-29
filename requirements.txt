@@ -1,0 +1,63 @@
+# ════════════════════════════════════════════════════════════
+# BlueSentinel V2.0 — Python Dependencies
+# Author: Valon Canolli | github.com/valoncanolli/BlueSentinel-V2
+# ════════════════════════════════════════════════════════════
+# Installation:
+#   pip install -r requirements.txt
+#
+# Windows binary packages (recommended to avoid build errors):
+#   pip install -r requirements.txt --only-binary=:all:
+#
+# Python 3.11 recommended. Minimum: 3.10
+# ════════════════════════════════════════════════════════════
+
+# ── Security & Detection ──────────────────────────────────────
+yara-python>=4.3.0           # YARA rule engine for malware detection
+
+# ── HTTP & Networking ─────────────────────────────────────────
+requests>=2.31.0             # HTTP client for threat intelligence APIs
+aiohttp>=3.9.0               # Async HTTP for parallel feed aggregation
+
+# ── Configuration & Environment ──────────────────────────────
+python-dotenv>=1.0.0         # Load configuration from .env file
+
+# ── Terminal Output ───────────────────────────────────────────
+colorama>=0.4.6              # ANSI colors on Windows terminal
+tqdm>=4.66.0                 # Progress bars for file scanning
+
+# ── System & Process Monitoring ──────────────────────────────
+psutil>=5.9.0                # Process info, memory, network connections
+
+# ── Data Science (Beaconing Detection + Anomaly Detection) ───
+numpy>=1.26.0                # Numerical arrays for FFT analysis
+scipy>=1.11.0                # Signal processing (FFT for C2 detection)
+scikit-learn>=1.3.0          # IsolationForest for anomaly detection
+
+# ── AI Providers ──────────────────────────────────────────────
+openai>=1.35.0               # GPT-4o for AI threat triage
+anthropic>=0.28.0            # Claude for AI threat triage
+
+# ── Web Dashboard ────────────────────────────────────────────
+flask>=3.0.0                 # Web framework for dashboard
+flask-socketio>=5.3.0        # Real-time WebSocket communication
+python-socketio>=5.10.0      # Socket.IO server
+eventlet>=0.35.0             # Async networking for Socket.IO
+flask-limiter>=3.5.0         # Rate limiting for API endpoints
+
+# ── Templating ────────────────────────────────────────────────
+jinja2>=3.1.0                # HTML template engine (used by Flask)
+
+# ── Data Formats ─────────────────────────────────────────────
+pyyaml>=6.0.0                # YAML parsing for Sigma rules
+
+# ── Security (HTTPS Dashboard) ───────────────────────────────
+cryptography>=41.0.0         # Self-signed TLS certificate generation
+
+# ── Testing ───────────────────────────────────────────────────
+pytest>=8.2.0
+pytest-asyncio>=0.23.0
+
+# ── PDF Export (optional) ────────────────────────────────────
+# Requires GTK3 runtime on Windows:
+# https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer
+weasyprint>=62.0

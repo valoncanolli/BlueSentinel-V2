@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% block title %}Alerts{% endblock %}
+
+{% block content %}
+{% set alerts = data.get('alerts', []) if data else [] %}
+
+<div class="page-title">
+  <h1>Alert Console</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">All Detections</span>
+  <span class="page-title__sub text-mono" id="alerts-count-label">{{ alerts | length }} alerts</span>
+</div>
+
+<!-- ══════════ FILTER BAR ══════════ -->
+<div class="panel mb-lg">
+  <div class="filter-bar">
+    <span class="filter-bar__label">Filter:</span>
+
+    <select class="filter-select" id="filter-severity" onchange="applyFilters()">
+      <option value="">All Severities</option>
+      <option value="Critical">Critical</option>
+      <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
+    </select>
+
+    <select class="filter-select" id="filter-type" onchange="applyFilters()">
+      <option value="">All Types</option>
+      <option value="YARA_MATCH">YARA Match</option>
+      <option value="BEACONING">Beaconing</option>
+      <option value="IOC_MATCH">IOC Match</option>
+      <option value="PROCESS_HOLLOW">Process Hollow</option>
+      <option value="ENCODED_POWERSHELL">Encoded PowerShell</option>
+    </select>
+
+    <select class="filter-select" id="filter-ack" onchange="applyFilters()">
+      <option value="">All Status</option>
+      <option value="unacked">Unacknowledged</option>
+      <option value="acked">Acknowledged</option>
+    </select>
+
+    <input class="filter-input" type="text" id="filter-search" placeholder="Search message…"
+           oninput="applyFilters()" style="min-width:160px">
+
+    <button class="filter-btn" onclick="clearFilters()">Clear</button>
+
+    <div style="flex:1"></div>
+
+    <!-- Bulk actions -->
+    <span id="bulk-count" class="text-muted text-xs" style="display:none">0 selected</span>
+    <button class="filter-btn" id="bulk-ack-btn" onclick="bulkAcknowledge()" style="display:none">
+      ✓ Acknowledge Selected
+    </button>
+    <button class="filter-btn filter-btn--danger" id="bulk-escalate-btn" onclick="bulkEscalate()" style="display:none">
+      ↑ Escalate Selected
+    </button>
+    <a href="/api/export/json" class="filter-btn">↓ Export JSON</a>
+    <a href="/api/export/cef" class="filter-btn">↓ Export CEF</a>
+  </div>
+</div>
+
+<!-- ══════════ ALERTS TABLE ══════════ -->
+<div class="panel">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Threat Alerts
+    </div>
+    <div class="panel__actions">
+      <span class="text-xs text-muted" id="visible-count">Showing {{ alerts | length }} alerts</span>
+    </div>
+  </div>
+  <div class="panel__body--flush" style="overflow-x:auto">
+    <table class="data-table" id="alerts-table" aria-label="All threat alerts">
+      <thead>
+        <tr>
+          <th style="width:30px"><input type="checkbox" id="select-all-chk" onchange="toggleSelectAll(this)" aria-label="Select all"></th>
+          <th onclick="sortTable('severity')" title="Sort by severity">Severity</th>
+          <th onclick="sortTable('message')" title="Sort by message">Message</th>
+          <th onclick="sortTable('alert_type')" title="Sort by type">Type</th>
+          <th onclick="sortTable('mitre_technique')" title="Sort by MITRE">MITRE</th>
+          <th onclick="sortTable('source_module')" title="Sort by module">Module</th>
+          <th onclick="sortTable('timestamp')" title="Sort by time" class="sorted-desc">Timestamp</th>
+          <th style="width:100px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="full-alerts-tbody">
+        {% for alert in alerts | sort(attribute='timestamp', reverse=True) %}
+        {% set sev = alert.get('severity', 'Low') | lower %}
+        <tr
+          class="alert-row {% if alert.get('acknowledged') %}acked-row{% endif %}"
+          data-severity="{{ alert.get('severity', '') }}"
+          data-type="{{ alert.get('type', alert.get('alert_type', '')) }}"
+          data-ack="{{ 'true' if alert.get('acknowledged') else 'false' }}"
+          data-message="{{ alert.get('message', '') | lower }}"
+          data-alert-id="{{ alert.get('alert_id', '') }}"
+          onclick="toggleExpand(this)"
+          style="{% if alert.get('acknowledged') %}opacity:0.55{% endif %}"
+        >
+          <td onclick="event.stopPropagation()">
+            <input type="checkbox" class="row-chk" data-id="{{ alert.get('alert_id', '') }}" onchange="updateBulkUI()">
+          </td>
+          <td>
+            <span class="badge badge--{{ sev }}">{{ alert.get('severity', 'Low') }}</span>
+          </td>
+          <td class="truncate" style="max-width:320px" title="{{ alert.get('message', '') }}">
+            {{ alert.get('message', '') | truncate(90) }}
+          </td>
+          <td class="text-mono text-xs">{{ alert.get('type', alert.get('alert_type', '—')) }}</td>
+          <td class="text-mono text-xs text-cyan">{{ alert.get('mitre_technique', '—') }}</td>
+          <td class="text-mono text-xs text-muted">{{ alert.get('source_module', '—') }}</td>
+          <td class="text-mono text-xs text-muted">
+            {{ alert.get('timestamp', '')[:19] | replace('T', ' ') if alert.get('timestamp') else '—' }}
+          </td>
+          <td onclick="event.stopPropagation()">
+            {% if alert.get('acknowledged') %}
+              <span class="badge badge--ack">ACK'd</span>
+            {% else %}
+              <button class="btn btn--sm btn--primary"
+                onclick="acknowledgeAlert('{{ alert.get('alert_id', '') }}', this)">ACK</button>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- Expandable AI Analysis Row -->
+        <tr class="data-table__expand" id="expand-{{ loop.index }}" style="display:none">
+          <td colspan="8">
+            <div class="ai-card">
+              <div class="ai-card__header">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707"/></svg>
+                AI Analysis — Alert {{ alert.get('alert_id', 'N/A') }}
+              </div>
+              <div class="ai-card__body">
+                {% if alert.get('ai_analysis') %}
+                  {% set ai = alert['ai_analysis'] %}
+                  {% if ai.get('explanation') or ai.get('summary') %}
+                    <p>{{ ai.get('explanation', ai.get('summary', '')) }}</p>
+                  {% endif %}
+                  {% if ai.get('mitre_technique') %}
+                    <p class="mt-sm text-xs text-cyan">MITRE: {{ ai['mitre_technique'] }}</p>
+                  {% endif %}
+                  {% if ai.get('recommendation') %}
+                    <p class="mt-sm text-xs text-warn">→ Recommendation: {{ ai['recommendation'] }}</p>
+                  {% endif %}
+                  {% if ai.get('confidence') is not none %}
+                    <p class="mt-sm text-xs text-muted">Confidence: {{ ai.get('confidence', '—') }}</p>
+                  {% endif %}
+                {% else %}
+                  <p class="text-muted text-xs" style="font-style:italic">
+                    No AI analysis available for this alert. Re-run with AI enabled to generate analysis.
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if alert.get('raw_data') %}
+            <details style="margin-top:0.75rem">
+              <summary style="font-family:var(--font-data);font-size:0.7rem;color:var(--text-muted);cursor:pointer">
+                Raw Data
+              </summary>
+              <pre style="font-family:var(--font-data);font-size:0.7rem;color:var(--text-secondary);background:rgba(0,0,0,0.3);padding:0.75rem;border-radius:4px;overflow-x:auto;margin-top:0.5rem">{{ alert.get('raw_data', {}) | tojson(indent=2) }}</pre>
+            </details>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="data-table__empty">No alerts detected — system appears clean</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Expand/collapse rows ────────────────────────────────────────────────
+let _expandedRow = null;
+
+function toggleExpand(row) {
+  const rows  = document.querySelectorAll('.alert-row');
+  const idx   = Array.from(rows).indexOf(row) + 1;
+  const expId = 'expand-' + idx;
+  const expRow = document.getElementById(expId);
+  if (!expRow) return;
+
+  if (_expandedRow && _expandedRow !== expRow) {
+    _expandedRow.style.display = 'none';
+  }
+  const isVisible = expRow.style.display !== 'none';
+  expRow.style.display = isVisible ? 'none' : 'table-row';
+  _expandedRow = isVisible ? null : expRow;
+  row.classList.toggle('expanded', !isVisible);
+}
+
+// ── Filtering ───────────────────────────────────────────────────────────
+function applyFilters() {
+  const sev    = document.getElementById('filter-severity').value.toLowerCase();
+  const type   = document.getElementById('filter-type').value.toLowerCase();
+  const ack    = document.getElementById('filter-ack').value;
+  const search = document.getElementById('filter-search').value.toLowerCase();
+  const rows   = document.querySelectorAll('.alert-row');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const rowSev  = (row.dataset.severity || '').toLowerCase();
+    const rowType = (row.dataset.type     || '').toLowerCase();
+    const rowAck  = row.dataset.ack;
+    const rowMsg  = (row.dataset.message  || '').toLowerCase();
+
+    const matchSev    = !sev    || rowSev.includes(sev);
+    const matchType   = !type   || rowType.includes(type);
+    const matchAck    = !ack    || (ack === 'acked' ? rowAck === 'true' : rowAck !== 'true');
+    const matchSearch = !search || rowMsg.includes(search);
+
+    const show = matchSev && matchType && matchAck && matchSearch;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  const countEl = document.getElementById('visible-count');
+  if (countEl) countEl.textContent = `Showing ${visible} of ${rows.length} alerts`;
+}
+
+function clearFilters() {
+  document.getElementById('filter-severity').value = '';
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-ack').value = '';
+  document.getElementById('filter-search').value = '';
+  applyFilters();
+}
+
+// ── Sorting ─────────────────────────────────────────────────────────────
+let _sortCol  = 'timestamp';
+let _sortDesc = true;
+
+function sortTable(col) {
+  const tbody = document.getElementById('full-alerts-tbody');
+  if (!tbody) return;
+
+  if (_sortCol === col) _sortDesc = !_sortDesc;
+  else { _sortCol = col; _sortDesc = true; }
+
+  document.querySelectorAll('.data-table th').forEach(th => {
+    th.classList.remove('sorted-asc', 'sorted-desc');
+  });
+  const headers = document.querySelectorAll('.data-table th');
+  const colMap  = { severity: 1, message: 2, alert_type: 3, mitre_technique: 4, source_module: 5, timestamp: 6 };
+  const thIdx   = colMap[col];
+  if (thIdx !== undefined && headers[thIdx]) {
+    headers[thIdx].classList.add(_sortDesc ? 'sorted-desc' : 'sorted-asc');
+  }
+
+  const rows = Array.from(tbody.querySelectorAll('.alert-row'));
+  const severityOrder = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+
+  rows.sort((a, b) => {
+    let va = a.dataset[col] || a.cells[colMap[col] || 0]?.textContent || '';
+    let vb = b.dataset[col] || b.cells[colMap[col] || 0]?.textContent || '';
+
+    if (col === 'severity') {
+      va = severityOrder[a.dataset.severity] || 0;
+      vb = severityOrder[b.dataset.severity] || 0;
+      return _sortDesc ? vb - va : va - vb;
+    }
+    return _sortDesc ? vb.localeCompare(va) : va.localeCompare(vb);
+  });
+
+  rows.forEach(row => {
+    tbody.appendChild(row);
+    const alertId = row.getAttribute('data-alert-id');
+    const expandRow = document.querySelector(`tr[id^="expand-"]`);
+    if (expandRow) tbody.appendChild(expandRow);
+  });
+}
+
+// ── Bulk selection ──────────────────────────────────────────────────────
+function toggleSelectAll(checkbox) {
+  document.querySelectorAll('.row-chk').forEach(chk => {
+    chk.checked = checkbox.checked;
+  });
+  updateBulkUI();
+}
+
+function updateBulkUI() {
+  const selected = document.querySelectorAll('.row-chk:checked').length;
+  const countEl  = document.getElementById('bulk-count');
+  const ackBtn   = document.getElementById('bulk-ack-btn');
+  const escBtn   = document.getElementById('bulk-escalate-btn');
+  if (countEl) { countEl.textContent = `${selected} selected`; countEl.style.display = selected ? 'inline' : 'none'; }
+  if (ackBtn)  ackBtn.style.display  = selected ? 'inline-flex' : 'none';
+  if (escBtn)  escBtn.style.display  = selected ? 'inline-flex' : 'none';
+}
+
+function bulkAcknowledge() {
+  document.querySelectorAll('.row-chk:checked').forEach(chk => {
+    const id  = chk.dataset.id;
+    const row = chk.closest('tr');
+    const btn = row ? row.querySelector('.btn--primary') : null;
+    if (id) acknowledgeAlert(id, btn);
+    chk.checked = false;
+  });
+  updateBulkUI();
+}
+
+function bulkEscalate() {
+  const ids = Array.from(document.querySelectorAll('.row-chk:checked')).map(c => c.dataset.id);
+  if (ids.length === 0) return;
+  BS_Realtime.showToast('Info', 'Escalation', `${ids.length} alert(s) marked for escalation.`, 5000);
+  document.querySelectorAll('.row-chk:checked').forEach(c => { c.checked = false; });
+  updateBulkUI();
+}
+
+// ── Init ────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  BS_Realtime.connect();
+});
+</script>
+{% endblock %}

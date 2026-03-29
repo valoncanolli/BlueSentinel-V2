@@ -1,0 +1,155 @@
+{
+  "_comment": "BlueSentinel v2.0 — Detection thresholds and scan configuration",
+  "_version": "2.0",
+
+  "beaconing": {
+    "min_connections": 6,
+    "jitter_threshold": 0.20,
+    "confidence_threshold": 70,
+    "max_iat_seconds": 3600,
+    "min_iat_seconds": 5,
+    "fft_min_points": 4
+  },
+
+  "virustotal": {
+    "malicious_threshold": 3,
+    "suspicious_threshold": 1,
+    "cache_ttl_files_seconds": 604800,
+    "cache_ttl_network_seconds": 86400,
+    "rate_limit_per_minute": 4
+  },
+
+  "anomaly_detection": {
+    "z_score_threshold": 3.0,
+    "isolation_forest_contamination": 0.05,
+    "min_samples_for_ml": 50,
+    "dns_query_rate_threshold": 100,
+    "unique_domains_threshold": 50
+  },
+
+  "threat_score": {
+    "critical_threshold": 86,
+    "high_threshold": 61,
+    "medium_threshold": 31,
+    "low_threshold": 0,
+    "weights": {
+      "yara_malware_family": 35,
+      "confirmed_beaconing": 30,
+      "ioc_match_c2": 25,
+      "process_hollowing": 30,
+      "suspicious_persistence": 20,
+      "event_log_anomaly": 15,
+      "unusual_prefetch": 10,
+      "encoded_powershell": 20,
+      "download_cradle": 25,
+      "office_spawn_shell": 20,
+      "registry_modification": 15
+    }
+  },
+
+  "scan_paths": {
+    "windows": [
+      "C:\\Windows\\Temp",
+      "C:\\Users",
+      "C:\\ProgramData",
+      "C:\\Windows\\System32\\Tasks",
+      "C:\\Windows\\SysWOW64",
+      "%APPDATA%",
+      "%LOCALAPPDATA%\\Temp"
+    ],
+    "linux": [
+      "/tmp",
+      "/var/tmp",
+      "/dev/shm",
+      "/home",
+      "/root",
+      "/usr/local/bin",
+      "/var/spool/cron"
+    ],
+    "exclude_patterns": [
+      "*.log",
+      "*.evtx",
+      "*.etl",
+      "pagefile.sys",
+      "hiberfil.sys",
+      "*.pf"
+    ],
+    "max_file_size_mb": 50,
+    "max_files_per_scan": 100000
+  },
+
+  "scan": {
+    "file_scan_paths": [
+      "C:\\Windows\\System32",
+      "C:\\Windows\\SysWOW64",
+      "C:\\Windows\\Temp",
+      "C:\\Users",
+      "C:\\ProgramData",
+      "C:\\Program Files",
+      "C:\\Program Files (x86)"
+    ],
+    "quick_scan_paths": [
+      "C:\\Windows\\Temp",
+      "C:\\Users\\%USERNAME%\\AppData\\Local\\Temp",
+      "C:\\Users\\%USERNAME%\\AppData\\Roaming",
+      "C:\\Users\\%USERNAME%\\Downloads",
+      "C:\\Users\\%USERNAME%\\Desktop",
+      "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+    ],
+    "max_file_size_mb": 50,
+    "quick_max_file_size_mb": 10,
+    "quick_max_files": 5000,
+    "quick_timeout_seconds": 300,
+    "fileonly_timeout_seconds": 600
+  },
+
+  "network": {
+    "suspicious_ports": [4444, 5555, 6666, 7777, 8888, 31337, 1337, 9001, 9030, 9050, 9051, 6660, 6661, 6662, 6663, 6664, 6665, 1234, 12345],
+    "exclude_loopback": true,
+    "exclude_multicast": true,
+    "capture_duration_seconds": 60,
+    "capture_packet_count": 10000,
+    "max_beaconing_flows_reported": 20
+  },
+
+  "yara": {
+    "scan_timeout_seconds": 30,
+    "cache_ttl_seconds": 86400,
+    "max_matched_strings": 10,
+    "enabled_categories": [
+      "malware_families",
+      "persistence",
+      "network",
+      "lolbins"
+    ]
+  },
+
+  "memory": {
+    "scan_enabled": true,
+    "suspicious_flags": [
+      "UNEXPECTED_PARENT",
+      "DUPLICATE_SINGLETON",
+      "WRONG_PATH",
+      "MODIFIED_PE_HEADER",
+      "INJECTION_DETECTED"
+    ],
+    "max_processes_to_scan": 200
+  },
+
+  "dashboard": {
+    "timeline_window_hours": 2,
+    "max_alerts_displayed": 200,
+    "refresh_interval_seconds": 30,
+    "chart_max_points": 120,
+    "max_beaconing_chart_ips": 8,
+    "max_sparkline_ips": 4
+  },
+
+  "ai_engine": {
+    "max_alerts_for_ai_triage": 10,
+    "max_tokens_per_alert": 500,
+    "max_tokens_executive_summary": 2000,
+    "temperature": 0.1,
+    "retry_attempts": 3
+  }
+}

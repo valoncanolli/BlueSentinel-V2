@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+{% set metrics = data or {} %}
+{% set alerts  = metrics.get('alerts', []) %}
+{% set score   = metrics.get('threat_score', 0) %}
+{% set critical = metrics.get('critical_count', alerts | selectattr('severity','equalto','Critical') | list | length) %}
+{% set high     = metrics.get('high_count',     alerts | selectattr('severity','equalto','High')     | list | length) %}
+
+<div class="page-title">
+  <h1>Security Overview</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">{{ metrics.get('hostname', 'localhost') }}</span>
+  <span class="page-title__sub text-mono">
+    Scan #{{ metrics.get('scan_id', '—') }}
+    {% if metrics.get('started_at') %}
+    &nbsp;·&nbsp; {{ metrics['started_at'][:19] | replace('T', ' ') }} UTC
+    {% endif %}
+  </span>
+</div>
+
+<!-- Demo bar -->
+<div id="demoBar" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0.6rem 1.2rem;margin-bottom:1rem;background:linear-gradient(90deg,#0a1020 0%,#0f1a35 100%);border:1px solid #00d4ff33;border-radius:6px;font-size:0.82rem;color:var(--text-muted)">
+  <div>
+    <span style="color:#00d4ff;font-weight:600">&#9711; DEMO MODE</span>
+    &nbsp;&mdash;&nbsp;No scan data yet? Load realistic threat scenarios to explore the dashboard.
+  </div>
+  <div style="display:flex;gap:0.5rem;flex-shrink:0">
+    <button onclick="loadDemoData()" style="padding:0.3rem 0.9rem;background:#00d4ff22;border:1px solid #00d4ff66;border-radius:4px;color:#00d4ff;cursor:pointer;font-size:0.8rem;font-weight:600">&#11015; Load Demo Data</button>
+    <button onclick="clearDemoData()" style="padding:0.3rem 0.7rem;background:#ff445522;border:1px solid #ff445566;border-radius:4px;color:#ff4455;cursor:pointer;font-size:0.8rem;font-weight:600">&#10005; Clear Demo</button>
+    <button onclick="document.getElementById('demoBar').style.display='none'" style="padding:0.3rem 0.7rem;background:transparent;border:1px solid #ffffff22;border-radius:4px;color:var(--text-muted);cursor:pointer;font-size:0.8rem">&#10005; Dismiss</button>
+  </div>
+</div>
+
+<!-- Scan Control Panel -->
+<div class="scan-control-panel" id="scanControlPanel" style="display:flex;align-items:center;gap:0.8rem;padding:0.6rem 1.2rem;margin-bottom:1rem;background:linear-gradient(90deg,#0a1020 0%,#0f1a35 100%);border:1px solid #00d4ff22;border-radius:6px;font-size:0.82rem">
+  <span style="color:#00d4ff;font-weight:600;margin-right:0.5rem">RUN SCAN</span>
+  <button onclick="startScan('quick-scan')" id="btn-quick" class="scan-btn" style="padding:0.3rem 0.7rem;background:#00d4ff15;border:1px solid #00d4ff44;border-radius:4px;color:#00d4ff;cursor:pointer;font-size:0.78rem;font-weight:600">Quick</button>
+  <button onclick="startScan('file-only')" id="btn-file" class="scan-btn" style="padding:0.3rem 0.7rem;background:#00d4ff15;border:1px solid #00d4ff44;border-radius:4px;color:#00d4ff;cursor:pointer;font-size:0.78rem;font-weight:600">Files</button>
+  <button onclick="startScan('network-only')" id="btn-network" class="scan-btn" style="padding:0.3rem 0.7rem;background:#00d4ff15;border:1px solid #00d4ff44;border-radius:4px;color:#00d4ff;cursor:pointer;font-size:0.78rem;font-weight:600">Network</button>
+  <button onclick="startScan('full-scan')" id="btn-full" class="scan-btn" style="padding:0.3rem 0.7rem;background:#ff990022;border:1px solid #ff990066;border-radius:4px;color:#ff9900;cursor:pointer;font-size:0.78rem;font-weight:600">Full</button>
+  <div id="scanStatusLine" style="display:none;margin-left:1rem;color:var(--text-muted);font-size:0.78rem;align-items:center;gap:0.5rem">
+    <span style="animation:spin 1s linear infinite;display:inline-block">&#10227;</span>
+    <span id="scanStatusText">Initializing...</span>
+    <div style="width:80px;height:4px;background:#ffffff11;border-radius:2px;overflow:hidden"><div id="scanMiniBarFill" style="width:0%;height:100%;background:#00d4ff;transition:width 0.3s"></div></div>
+  </div>
+</div>
+
+<!-- ══════════ TOP ROW: Gauge + KPIs ══════════ -->
+<div class="dashboard-top">
+
+  <!-- Risk gauge -->
+  <div class="panel panel--glow" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 1rem">
+    <div class="panel__title" style="justify-content:center;margin-bottom:0.75rem">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      COMPOSITE RISK SCORE
+    </div>
+    <canvas id="risk-gauge-canvas" width="200" height="110" aria-label="Risk gauge showing score {{ score }}/100"></canvas>
+    <div class="risk-gauge-wrap" style="margin-top:-0.5rem">
+      {% set risk_label = 'Clean' %}
+      {% if score >= 86 %}{% set risk_label = 'Critical' %}
+      {% elif score >= 61 %}{% set risk_label = 'High' %}
+      {% elif score >= 31 %}{% set risk_label = 'Medium' %}
+      {% elif score > 0 %}{% set risk_label = 'Low' %}{% endif %}
+      <span id="risk-gauge-level" class="risk-gauge-level risk-level--{{ risk_label | lower }}">
+        {{ risk_label | upper }}
+      </span>
+      <span class="risk-gauge-label">Overall Posture</span>
+    </div>
+  </div>
+
+  <!-- KPI grid -->
+  <div class="dashboard-kpi-side">
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-card--danger">
+        <div class="kpi-card__label">Critical Alerts</div>
+        <div class="kpi-card__value kpi-card__value--danger" id="kpi-critical">{{ critical }}</div>
+        <div class="kpi-card__sub">Require immediate action</div>
+      </div>
+      <div class="kpi-card kpi-card--warning">
+        <div class="kpi-card__label">High Alerts</div>
+        <div class="kpi-card__value kpi-card__value--warning" id="kpi-high">{{ high }}</div>
+        <div class="kpi-card__sub">Investigate promptly</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card__label">Total Alerts</div>
+        <div class="kpi-card__value" id="kpi-total">{{ alerts | length }}</div>
+        <div class="kpi-card__sub">All severities</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card__label">YARA Matches</div>
+        <div class="kpi-card__value kpi-card__value--cyan" id="kpi-yara">{{ metrics.get('yara_matches', []) | length }}</div>
+        <div class="kpi-card__sub">File rule hits</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card__label">Beaconing</div>
+        <div class="kpi-card__value kpi-card__value--warning" id="kpi-beacon">{{ metrics.get('beaconing_alerts', []) | length }}</div>
+        <div class="kpi-card__sub">C2 flows detected</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card__label">IOC Matches</div>
+        <div class="kpi-card__value" id="kpi-ioc">{{ metrics.get('ioc_matches', []) | length }}</div>
+        <div class="kpi-card__sub">Known bad indicators</div>
+      </div>
+    </div>
+
+    <!-- Scan meta row -->
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <div class="kpi-card" style="flex:1;min-width:160px">
+        <div class="kpi-card__label">Scan Duration</div>
+        <div class="kpi-card__value text-mono" style="font-size:1.2rem">{{ '%.1f' % metrics.get('duration_seconds', 0) }}s</div>
+        <div class="kpi-card__sub">{{ metrics.get('scan_mode', 'N/A') }}</div>
+      </div>
+      <div class="kpi-card" style="flex:1;min-width:160px">
+        <div class="kpi-card__label">AI Engine</div>
+        <div class="kpi-card__value text-mono kpi-card__value--cyan" style="font-size:1.1rem" id="kpi-ai-provider">
+          {{ metrics.get('ai_provider_used', 'N/A') | upper }}
+        </div>
+        <div class="kpi-card__sub">Active provider</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MIDDLE ROW: Timeline + Donut + AI Suggestions ══════════ -->
+<div class="dashboard-mid">
+
+  <!-- Threat Timeline -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Threat Timeline
+      </div>
+      <div class="panel__actions">
+        <span class="text-xs text-muted">2h rolling window</span>
+      </div>
+    </div>
+    <div class="panel__body" style="height:220px;position:relative">
+      <canvas id="timeline-canvas" aria-label="Threat timeline chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Threat Category Donut -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Threat Categories
+      </div>
+    </div>
+    <div class="panel__body" style="display:flex;justify-content:center">
+      <canvas id="donut-canvas" width="240" height="200" aria-label="Threat category breakdown"></canvas>
+    </div>
+  </div>
+
+  <!-- AI Risk Suggestions -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        AI Risk Insights
+      </div>
+    </div>
+    <div class="panel__body--compact" style="overflow-y:auto;max-height:220px">
+      {% if metrics.get('ai_summary') %}
+        <p style="font-size:0.8rem;color:var(--text-primary);line-height:1.6;margin-bottom:0.75rem">
+          {{ metrics['ai_summary'][:400] }}{% if metrics['ai_summary']|length > 400 %}…{% endif %}
+        </p>
+      {% else %}
+        <p style="font-size:0.8rem;color:var(--text-muted);font-style:italic">
+          Run a scan to generate AI-powered risk insights.
+        </p>
+      {% endif %}
+
+      {% for alert in alerts[:3] if alert.get('ai_analysis') %}
+      <div class="ai-card__suggestion">
+        <span class="ai-card__suggestion-icon">⚠</span>
+        <div class="ai-card__suggestion-text">
+          <strong>{{ alert.severity }}</strong> — {{ alert.get('ai_analysis', {}).get('recommendation', alert.get('message', ''))[:100] }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ ALERTS + BEACONING ROW ══════════ -->
+<div class="dashboard-alerts">
+
+  <!-- Active Alerts Table -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Active Alerts
+        <span class="text-muted text-xs">({{ alerts | length }} total)</span>
+      </div>
+      <a href="{{ url_for('alerts') }}" class="btn btn--sm">View All</a>
+    </div>
+    <div class="panel__body--flush" style="overflow-x:auto">
+      <table class="data-table" aria-label="Active alerts">
+        <thead>
+          <tr>
+            <th style="width:90px">Severity</th>
+            <th>Message</th>
+            <th style="width:100px">Type</th>
+            <th style="width:80px">MITRE</th>
+            <th style="width:80px">Time</th>
+          </tr>
+        </thead>
+        <tbody id="alerts-tbody">
+          {% for alert in alerts[:15] %}
+          <tr data-alert-id="{{ alert.get('alert_id', '') }}">
+            <td>
+              <span class="badge badge--{{ alert.get('severity', 'low') | lower }}">
+                {{ alert.get('severity', 'Low') }}
+              </span>
+            </td>
+            <td class="truncate" style="max-width:280px" title="{{ alert.get('message', '') }}">
+              {{ alert.get('message', '') | truncate(80) }}
+            </td>
+            <td class="text-mono text-xs">{{ alert.get('type', alert.get('alert_type', '')) }}</td>
+            <td class="text-mono text-xs text-cyan">{{ alert.get('mitre_technique', '—') }}</td>
+            <td class="text-mono text-xs text-muted">
+              {{ alert.get('timestamp', '')[:16] | replace('T', ' ') if alert.get('timestamp') else '—' }}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td class="data-table__empty" colspan="5">No alerts — system appears clean</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Beaconing Chart -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.5 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.41 2.5h3a2 2 0 0 1 2 1.72"/></svg>
+        Top Beaconing IPs
+      </div>
+      <a href="{{ url_for('network') }}" class="btn btn--sm">Details</a>
+    </div>
+    <div class="panel__body" style="height:280px;position:relative">
+      <canvas id="beaconing-canvas" aria-label="Beaconing confidence chart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ HARDWARE MONITOR PANEL ══════════ -->
+<div class="panel" style="margin-bottom:1rem">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+      Hardware Monitor
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <span class="text-xs text-muted" id="hw-mini-timestamp">—</span>
+      <a href="{{ url_for('hardware') }}" class="btn btn--sm">View Full</a>
+    </div>
+  </div>
+  <div class="panel__body">
+
+    <!-- Resource bars row -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:1rem">
+
+      <!-- CPU -->
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:4px">
+          <span style="color:var(--text-muted)">CPU</span>
+          <span id="hw-mini-cpu-pct" style="color:var(--cyan)">—</span>
+        </div>
+        <div style="height:6px;background:#1a2d4a;border-radius:3px;overflow:hidden;margin-bottom:3px">
+          <div id="hw-mini-cpu-bar" style="width:0%;height:100%;background:#00d4ff;transition:width 0.5s;border-radius:3px"></div>
+        </div>
+        <div style="font-size:0.67rem;color:var(--text-muted)" id="hw-mini-cpu-temp">Temp: —</div>
+      </div>
+
+      <!-- RAM -->
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:4px">
+          <span style="color:var(--text-muted)">RAM</span>
+          <span id="hw-mini-ram-pct" style="color:var(--success)">—</span>
+        </div>
+        <div style="height:6px;background:#1a2d4a;border-radius:3px;overflow:hidden;margin-bottom:3px">
+          <div id="hw-mini-ram-bar" style="width:0%;height:100%;background:#00ff88;transition:width 0.5s;border-radius:3px"></div>
+        </div>
+        <div style="font-size:0.67rem;color:var(--text-muted)" id="hw-mini-ram-detail">— GB / — GB</div>
+      </div>
+
+      <!-- Disk -->
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:4px">
+          <span style="color:var(--text-muted)">Disk I/O</span>
+          <span id="hw-mini-disk-io" style="color:var(--amber)">—</span>
+        </div>
+        <div style="height:6px;background:#1a2d4a;border-radius:3px;overflow:hidden;margin-bottom:3px" id="hw-mini-disk-bar-wrap">
+          <div id="hw-mini-disk-bar" style="width:0%;height:100%;background:#ffb800;transition:width 0.5s;border-radius:3px"></div>
+        </div>
+        <div style="font-size:0.67rem;color:var(--text-muted)" id="hw-mini-disk-detail">R: — W: — MB/s</div>
+      </div>
+    </div>
+
+    <!-- Ports + Top connections row -->
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1rem">
+
+      <!-- Port pills -->
+      <div>
+        <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:6px">OPEN PORTS</div>
+        <div id="hw-mini-ports" style="display:flex;flex-wrap:wrap;gap:4px">
+          <span style="font-size:0.7rem;color:var(--text-muted)">—</span>
+        </div>
+      </div>
+
+      <!-- Top 5 connections -->
+      <div>
+        <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:6px">TOP CONNECTIONS — <span id="hw-mini-conn-stats"></span></div>
+        <div id="hw-mini-conns" style="display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ BOTTOM: MITRE Heatmap + Sparklines ══════════ -->
+<div class="dashboard-bottom">
+
+  <!-- MITRE Heatmap -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="4" height="4"/><rect x="10" y="3" width="4" height="4"/><rect x="17" y="3" width="4" height="4"/></svg>
+        MITRE ATT&amp;CK Coverage
+      </div>
+      <div class="panel__actions">
+        <a href="{{ url_for('mitre') }}" class="btn btn--sm">Full Matrix</a>
+      </div>
+    </div>
+    <div class="panel__body--flush mitre-container" style="overflow-x:auto">
+      <canvas id="mitre-mini-canvas" aria-label="MITRE ATT&CK heatmap"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Suspicious IPs Sparklines -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Top Suspicious IPs
+      </div>
+    </div>
+    <div class="panel__body--compact">
+      <div class="sparkline-grid" id="sparklines-container">
+        <div style="text-align:center;color:var(--text-muted);padding:2rem;font-size:0.8rem;grid-column:span 2">
+          No beaconing data — sparklines will appear after a network scan
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // ── Risk Gauge ──────────────────────────────────────────────────────────
+  const gaugeChart = BS_Charts.initRiskGauge('risk-gauge-canvas', {{ score }});
+  BS_Realtime.setGaugeInstance(gaugeChart);
+
+  // ── Threat Timeline ─────────────────────────────────────────────────────
+  let timelineChart = null;
+  fetch('/api/timeline', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(points => {
+      timelineChart = BS_Charts.initThreatTimeline('timeline-canvas', points);
+      BS_Realtime.setTimelineInstance(timelineChart);
+    })
+    .catch(() => {
+      timelineChart = BS_Charts.initThreatTimeline('timeline-canvas', []);
+      BS_Realtime.setTimelineInstance(timelineChart);
+    });
+
+  // ── Threat Donut ────────────────────────────────────────────────────────
+  const categoryMap = {};
+  {% for alert in alerts %}
+  (function() {
+    const atype = '{{ alert.get("type", alert.get("alert_type", "OTHER")) | replace('"', '') }}';
+    categoryMap[atype] = (categoryMap[atype] || 0) + 1;
+  })();
+  {% endfor %}
+  if (Object.keys(categoryMap).length === 0) {
+    categoryMap['No Detections'] = 1;
+  }
+  BS_Charts.initThreatDonut('donut-canvas', categoryMap);
+
+  // ── Beaconing Chart ─────────────────────────────────────────────────────
+  fetch('/api/beaconing', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(beacons => {
+      window._beaconingChart = BS_Charts.initBeaconingChart('beaconing-canvas', beacons);
+    })
+    .catch(() => {
+      window._beaconingChart = BS_Charts.initBeaconingChart('beaconing-canvas', []);
+    });
+
+  // ── Sparklines ──────────────────────────────────────────────────────────
+  fetch('/api/beaconing', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(beacons => {
+      if (beacons && beacons.length > 0) {
+        BS_Charts.initSparklines('sparklines-container', beacons);
+      }
+    })
+    .catch(() => {});
+
+  // ── Hardware Monitor (mini panel) ───────────────────────────────────────
+  (function() {
+    const colorMap = { legitimate: '#00ff88', suspicious: '#ffb800', malicious: '#ff3b5c' };
+
+    function applyHwUpdate(data) {
+      if (!data) return;
+      const ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '—';
+      const tsEl = document.getElementById('hw-mini-timestamp');
+      if (tsEl) tsEl.textContent = ts;
+
+      const cpu = data.cpu || {}, ram = data.ram || {}, disk = data.disk || {}, summary = data.summary || {};
+      const cpuPct = cpu.percent || 0, ramPct = ram.percent || 0;
+
+      // CPU
+      const cpuBar = document.getElementById('hw-mini-cpu-bar');
+      const cpuPctEl = document.getElementById('hw-mini-cpu-pct');
+      if (cpuBar) { cpuBar.style.width = cpuPct + '%'; cpuBar.style.background = cpuPct >= 90 ? '#ff3b5c' : cpuPct >= 70 ? '#ffb800' : '#00d4ff'; }
+      if (cpuPctEl) cpuPctEl.textContent = cpuPct + '%';
+      const cpuTemp = document.getElementById('hw-mini-cpu-temp');
+      if (cpuTemp) cpuTemp.textContent = cpu.temperature != null ? `Temp: ${cpu.temperature}°C` : 'Temp: N/A';
+
+      // RAM
+      const ramBar = document.getElementById('hw-mini-ram-bar');
+      const ramPctEl = document.getElementById('hw-mini-ram-pct');
+      if (ramBar) { ramBar.style.width = ramPct + '%'; ramBar.style.background = ramPct >= 90 ? '#ff3b5c' : ramPct >= 70 ? '#ffb800' : '#00ff88'; }
+      if (ramPctEl) ramPctEl.textContent = ramPct + '%';
+      const ramDetail = document.getElementById('hw-mini-ram-detail');
+      if (ramDetail) ramDetail.textContent = `${(ram.used_gb || 0)} GB / ${(ram.total_gb || 0)} GB`;
+
+      // Disk
+      const diskIo = document.getElementById('hw-mini-disk-io');
+      const diskDetail = document.getElementById('hw-mini-disk-detail');
+      if (diskIo) diskIo.textContent = `↑${(disk.total_write_mbps || 0).toFixed(1)} ↓${(disk.total_read_mbps || 0).toFixed(1)} MB/s`;
+      if (diskDetail) diskDetail.textContent = `R: ${(disk.total_read_mbps || 0).toFixed(1)}  W: ${(disk.total_write_mbps || 0).toFixed(1)} MB/s`;
+      const diskBar = document.getElementById('hw-mini-disk-bar');
+      if (diskBar && disk.drives && disk.drives[0]) {
+        diskBar.style.width = disk.drives[0].percent + '%';
+        diskBar.style.background = disk.suspicious_activity ? '#ff3b5c' : '#ffb800';
+      }
+
+      // Ports
+      const portsEl = document.getElementById('hw-mini-ports');
+      if (portsEl && data.open_ports && data.open_ports.length) {
+        portsEl.innerHTML = data.open_ports.slice(0, 12).map(p => {
+          const c = colorMap[p.classification] || '#7a9ab8';
+          return `<span title="${p.service} (${p.process})" style="background:${c}18;border:1px solid ${c}44;border-radius:10px;padding:1px 7px;font-size:0.67rem;font-family:monospace;color:${c}">${p.port}</span>`;
+        }).join('');
+      }
+
+      // Connections summary
+      const connStats = document.getElementById('hw-mini-conn-stats');
+      if (connStats) {
+        const mal = summary.malicious_connections || 0, sus = summary.suspicious_connections || 0;
+        connStats.innerHTML = `<span style="color:#00ff88">${summary.total_connections || 0} total</span>`
+          + (mal ? ` &nbsp; <span style="color:#ff3b5c">${mal} malicious</span>` : '')
+          + (sus ? ` &nbsp; <span style="color:#ffb800">${sus} suspicious</span>` : '');
+      }
+
+      const connsEl = document.getElementById('hw-mini-conns');
+      if (connsEl && data.connections) {
+        const top5 = data.connections.slice(0, 5);
+        if (!top5.length) { connsEl.innerHTML = '<span style="font-size:0.72rem;color:var(--text-muted)">No connections</span>'; return; }
+        connsEl.innerHTML = top5.map(c => {
+          const dot = colorMap[c.classification] || '#7a9ab8';
+          return `<div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;padding:2px 0">
+            <span style="width:7px;height:7px;border-radius:50%;background:${dot};flex-shrink:0"></span>
+            <span class="text-mono" style="color:var(--text-muted);width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.remote_addr || '—'}:${c.remote_port || '?'}</span>
+            <span style="color:var(--text-primary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.process_name || '—'}</span>
+            <span style="color:${dot};font-size:0.65rem">${c.classification}</span>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // Subscribe to hardware updates from Socket.IO (shared connection in realtime.js)
+    const _hwSocket = typeof io !== 'undefined' ? io() : null;
+    if (_hwSocket) {
+      _hwSocket.on('hardware_update', applyHwUpdate);
+    }
+    // Initial fetch
+    fetch('/api/hardware', { credentials: 'same-origin' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) applyHwUpdate(d); })
+      .catch(() => {});
+  })();
+
+  // ── MITRE Mini Heatmap ──────────────────────────────────────────────────
+  fetch('/api/mitre-coverage', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(coverage => {
+      window._mitreHeatmap = initMitreHeatmap('mitre-mini-canvas', coverage, {
+        cellWidth:  70,
+        cellHeight: 18,
+        headerHeight: 34,
+        fontSize: 8,
+      });
+    })
+    .catch(() => {
+      window._mitreHeatmap = initMitreHeatmap('mitre-mini-canvas', {}, {
+        cellWidth: 70, cellHeight: 18, headerHeight: 34, fontSize: 8,
+      });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+{% block title %}Hardware Monitor{% endblock %}
+
+{% block content %}
+<div class="page-title">
+  <h1>Hardware Monitor</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">{{ hostname | default('localhost') }}</span>
+  <span class="page-title__sub text-mono" id="hw-timestamp">Live — updating every 2s</span>
+</div>
+
+<!-- ══════════ KPI ROW ══════════ -->
+<div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:1rem">
+  <div class="kpi-card" id="hw-kpi-cpu">
+    <div class="kpi-card__label">CPU Usage</div>
+    <div class="kpi-card__value kpi-card__value--cyan" id="hw-cpu-pct">—</div>
+    <div class="kpi-card__sub" id="hw-cpu-temp">Temperature: —</div>
+  </div>
+  <div class="kpi-card" id="hw-kpi-ram">
+    <div class="kpi-card__label">RAM Usage</div>
+    <div class="kpi-card__value" id="hw-ram-pct">—</div>
+    <div class="kpi-card__sub" id="hw-ram-detail">— GB / — GB</div>
+  </div>
+  <div class="kpi-card" id="hw-kpi-disk">
+    <div class="kpi-card__label">Disk I/O</div>
+    <div class="kpi-card__value kpi-card__value--cyan" id="hw-disk-io">—</div>
+    <div class="kpi-card__sub" id="hw-disk-detail">R: — W: — MB/s</div>
+  </div>
+  <div class="kpi-card" id="hw-kpi-conn">
+    <div class="kpi-card__label">Connections</div>
+    <div class="kpi-card__value" id="hw-conn-total">—</div>
+    <div class="kpi-card__sub">
+      <span id="hw-conn-mal" style="color:var(--danger)">0 malicious</span>
+      &nbsp;·&nbsp;
+      <span id="hw-conn-sus" style="color:var(--warning)">0 suspicious</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ CPU + RAM ROW ══════════ -->
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+
+  <!-- CPU Detail -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">CPU</div>
+      <span class="text-xs text-muted" id="hw-cpu-freq">— MHz</span>
+    </div>
+    <div class="panel__body">
+      <div style="display:flex;justify-content:center;margin-bottom:0.75rem">
+        <canvas id="hw-cpu-gauge" width="180" height="100"></canvas>
+      </div>
+      <div id="hw-core-bars" style="display:flex;flex-direction:column;gap:4px"></div>
+    </div>
+  </div>
+
+  <!-- RAM Detail -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">RAM</div>
+      <span class="text-xs text-muted" id="hw-swap-label">Swap: —</span>
+    </div>
+    <div class="panel__body">
+      <div style="display:flex;justify-content:center;margin-bottom:0.75rem">
+        <canvas id="hw-ram-gauge" width="180" height="100"></canvas>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.5rem">Top memory consumers</div>
+      <div id="hw-ram-procs" style="display:flex;flex-direction:column;gap:3px"></div>
+    </div>
+  </div>
+
+  <!-- CPU History -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">CPU History</div>
+      <span class="text-xs text-muted">2-min window</span>
+    </div>
+    <div class="panel__body" style="height:200px;position:relative">
+      <canvas id="hw-cpu-history-chart" aria-label="CPU history chart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════ DISK + NETWORK ROW ══════════ -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+
+  <!-- Disk Drives -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        Disk Drives
+      </div>
+      <span class="text-xs" id="hw-disk-alert" style="color:var(--danger);display:none">⚠ HIGH WRITE RATE</span>
+    </div>
+    <div class="panel__body" id="hw-drive-list"></div>
+  </div>
+
+  <!-- Network Interfaces -->
+  <div class="panel">
+    <div class="panel__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="6" height="6"/><rect x="16" y="2" width="6" height="6"/><rect x="9" y="16" width="6" height="6"/><line x1="5" y1="8" x2="5" y2="19"/><line x1="19" y1="8" x2="19" y2="19"/><line x1="5" y1="19" x2="9" y2="19"/><line x1="15" y1="19" x2="19" y2="19"/></svg>
+        Network Interfaces
+      </div>
+    </div>
+    <div class="panel__body" id="hw-iface-list"></div>
+  </div>
+
+</div>
+
+<!-- ══════════ PORT STATUS BAR ══════════ -->
+<div class="panel" style="margin-bottom:1rem">
+  <div class="panel__header">
+    <div class="panel__title">Open Ports</div>
+    <span class="text-xs text-muted">
+      <span style="color:var(--success)">● legitimate</span> &nbsp;
+      <span style="color:var(--warning)">● suspicious</span> &nbsp;
+      <span style="color:var(--danger)">● malicious</span>
+    </span>
+  </div>
+  <div class="panel__body" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px" id="hw-ports-bar">
+    <span style="color:var(--text-muted);font-size:0.78rem">Waiting for data…</span>
+  </div>
+</div>
+
+<!-- ══════════ CONNECTIONS TABLE ══════════ -->
+<div class="panel">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/></svg>
+      Active Connections
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center">
+      <input type="text" id="hw-conn-filter" placeholder="Filter IP / process…"
+             style="background:var(--bg-input);border:1px solid var(--border-dim);color:var(--text-primary);padding:3px 8px;border-radius:4px;font-size:0.75rem;width:160px">
+      <span class="text-xs text-muted" id="hw-conn-count-label">0 connections</span>
+    </div>
+  </div>
+  <div class="panel__body--flush" style="overflow-x:auto;max-height:460px;overflow-y:auto">
+    <table class="data-table" aria-label="Active connections">
+      <thead>
+        <tr>
+          <th style="width:20px"></th>
+          <th style="width:110px">Local</th>
+          <th style="width:160px">Remote IP:Port</th>
+          <th style="width:80px">Status</th>
+          <th style="width:130px">Process</th>
+          <th>Classification</th>
+          <th style="width:70px">Duration</th>
+        </tr>
+      </thead>
+      <tbody id="hw-conn-tbody">
+        <tr><td class="data-table__empty" colspan="7">Waiting for hardware data…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  // ── Gauge helper (half-circle doughnut) ──────────────────────────────────
+  function makeGauge(canvasId, pct, label1, label2) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return null;
+    const color = pct >= 90 ? '#ff3b5c' : pct >= 70 ? '#ffb800' : pct >= 50 ? '#ff7c2a' : '#00ff88';
+    return new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [pct, 100 - pct],
+          backgroundColor: [color, '#1a2d4a'],
+          borderWidth: 0,
+          circumference: 180,
+          rotation: -90,
+        }]
+      },
+      options: {
+        responsive: false,
+        cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false },
+          // Store the category label so afterDraw can read it dynamically
+          gaugeCategory: label2,
+        },
+      },
+      plugins: [{
+        id: 'centerText',
+        afterDraw(chart) {
+          const { ctx: c, width, height } = chart;
+          const cx = width / 2, cy = height * 0.82;
+          // Read live percent from chart data — NOT from closure
+          const livePct = chart.data.datasets[0].data[0] || 0;
+          const liveLabel1 = livePct.toFixed(1) + '%';
+          const liveLabel2 = chart.options.plugins.gaugeCategory || label2;
+          c.save();
+          c.fillStyle = '#e0eeff';
+          c.font = 'bold 22px JetBrains Mono, monospace';
+          c.textAlign = 'center';
+          c.fillText(liveLabel1, cx, cy);
+          c.font = '11px Inter, sans-serif';
+          c.fillStyle = '#7a9ab8';
+          c.fillText(liveLabel2, cx, cy + 16);
+          c.restore();
+        }
+      }]
+    });
+  }
+
+  // ── History line chart ───────────────────────────────────────────────────
+  function makeHistoryChart(canvasId) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return null;
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: Array(60).fill(''),
+        datasets: [{
+          data: Array(60).fill(null),
+          borderColor: '#00d4ff',
+          backgroundColor: 'rgba(0,212,255,0.08)',
+          borderWidth: 1.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 0 },
+        scales: {
+          x: { display: false },
+          y: { min: 0, max: 100, grid: { color: '#1a2d4a' }, ticks: { color: '#7a9ab8', font: { size: 10 } } }
+        },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+      }
+    });
+  }
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let cpuGauge = null, ramGauge = null, cpuHistChart = null;
+  let allConnections = [];
+
+  // Init charts after DOM ready
+  document.addEventListener('DOMContentLoaded', function() {
+    cpuGauge = makeGauge('hw-cpu-gauge', 0, '0.0%', 'CPU');
+    ramGauge = makeGauge('hw-ram-gauge', 0, '0.0%', 'RAM');
+    // Expose on window so external scripts can also update them
+    window.cpuGaugeChart = cpuGauge;
+    window.ramGaugeChart = ramGauge;
+    cpuHistChart = makeHistoryChart('hw-cpu-history-chart');
+
+    // Filter input
+    document.getElementById('hw-conn-filter').addEventListener('input', function() {
+      renderConnTable(allConnections);
+    });
+  });
+
+  // ── Update functions ─────────────────────────────────────────────────────
+  function fmtBytes(bps) {
+    if (bps >= 1e6) return (bps / 1e6).toFixed(1) + ' MB/s';
+    if (bps >= 1e3) return (bps / 1e3).toFixed(0) + ' KB/s';
+    return bps + ' B/s';
+  }
+
+  function updateGauge(chart, pct, label1, label2) {
+    if (!chart) return;
+    const color = pct >= 90 ? '#ff3b5c' : pct >= 70 ? '#ffb800' : pct >= 50 ? '#ff7c2a' : '#00ff88';
+    chart.data.datasets[0].data = [pct, 100 - pct];
+    chart.data.datasets[0].backgroundColor[0] = color;
+    chart.options.plugins.centerText = { label1, label2 };
+    // Re-register plugin text inline
+    chart._plugins = chart._plugins || [];
+    chart.update('none');
+  }
+
+  function renderCoreBars(cores) {
+    const el = document.getElementById('hw-core-bars');
+    if (!el) return;
+    el.innerHTML = cores.map((c, i) => {
+      const color = c >= 90 ? '#ff3b5c' : c >= 70 ? '#ffb800' : '#00d4ff';
+      return `<div style="display:flex;align-items:center;gap:6px;font-size:0.7rem">
+        <span style="color:var(--text-muted);width:40px">Core ${i}</span>
+        <div style="flex:1;height:5px;background:#1a2d4a;border-radius:3px;overflow:hidden">
+          <div style="width:${c}%;height:100%;background:${color};transition:width 0.3s"></div>
+        </div>
+        <span style="color:var(--text-primary);width:30px;text-align:right">${c}%</span>
+      </div>`;
+    }).join('');
+  }
+
+  function renderRamProcs(procs) {
+    const el = document.getElementById('hw-ram-procs');
+    if (!el) return;
+    el.innerHTML = procs.slice(0, 6).map(p =>
+      `<div style="display:flex;justify-content:space-between;font-size:0.7rem;padding:2px 0;border-bottom:1px solid var(--border-dim)">
+        <span class="truncate" style="max-width:140px;color:var(--text-primary)">${p.name}</span>
+        <span style="color:var(--cyan)">${p.mb} MB</span>
+      </div>`
+    ).join('');
+  }
+
+  function renderDrives(drives, suspicious) {
+    const el = document.getElementById('hw-drive-list');
+    const alert = document.getElementById('hw-disk-alert');
+    if (!el) return;
+    if (alert) alert.style.display = suspicious ? '' : 'none';
+    el.innerHTML = drives.map(d => {
+      const color = d.percent >= 90 ? '#ff3b5c' : d.percent >= 75 ? '#ffb800' : '#00d4ff';
+      return `<div style="margin-bottom:0.75rem">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:4px">
+          <span class="text-mono" style="color:var(--text-primary)">${d.mount}</span>
+          <span style="color:${color}">${d.percent}%</span>
+        </div>
+        <div style="height:6px;background:#1a2d4a;border-radius:3px;overflow:hidden;margin-bottom:4px">
+          <div style="width:${d.percent}%;height:100%;background:${color};transition:width 0.3s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--text-muted)">
+          <span>${d.used_gb} GB / ${d.total_gb} GB</span>
+          <span>↑ ${d.write_mbps} MB/s &nbsp; ↓ ${d.read_mbps} MB/s</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderInterfaces(ifaces) {
+    const el = document.getElementById('hw-iface-list');
+    if (!el) return;
+    el.innerHTML = ifaces.filter(i => i.is_up).slice(0, 6).map(i =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-dim);font-size:0.75rem">
+        <div>
+          <span style="color:var(--text-primary)">${i.name}</span>
+          <span style="color:var(--success);margin-left:6px;font-size:0.65rem">● UP</span>
+        </div>
+        <div style="text-align:right;color:var(--text-muted);font-size:0.7rem">
+          <span style="color:var(--cyan)">↑ ${fmtBytes(i.bytes_sent_ps)}</span>
+          &nbsp;
+          <span style="color:var(--success)">↓ ${fmtBytes(i.bytes_recv_ps)}</span>
+        </div>
+      </div>`
+    ).join('') || '<span style="color:var(--text-muted);font-size:0.78rem">No active interfaces</span>';
+  }
+
+  function renderPortsBar(ports) {
+    const el = document.getElementById('hw-ports-bar');
+    if (!el) return;
+    if (!ports.length) {
+      el.innerHTML = '<span style="color:var(--text-muted);font-size:0.78rem">No open ports detected</span>';
+      return;
+    }
+    const colorMap = { legitimate: '#00ff88', suspicious: '#ffb800', malicious: '#ff3b5c' };
+    el.innerHTML = ports.map(p => {
+      const c = colorMap[p.classification] || '#7a9ab8';
+      const tip = `${p.service} — ${p.process} (PID ${p.pid}) — ${p.connection_count} conn`;
+      return `<span title="${tip}" style="
+        display:inline-flex;align-items:center;gap:4px;
+        background:${c}18;border:1px solid ${c}44;border-radius:12px;
+        padding:2px 8px;font-size:0.7rem;font-family:monospace;color:${c};cursor:default">
+        <span style="width:6px;height:6px;border-radius:50%;background:${c};flex-shrink:0"></span>
+        ${p.port}
+      </span>`;
+    }).join('');
+  }
+
+  function renderConnTable(conns) {
+    const filter = (document.getElementById('hw-conn-filter').value || '').toLowerCase();
+    const tbody = document.getElementById('hw-conn-tbody');
+    const countLbl = document.getElementById('hw-conn-count-label');
+    if (!tbody) return;
+
+    const visible = filter
+      ? conns.filter(c =>
+          (c.remote_addr || '').includes(filter) ||
+          (c.process_name || '').toLowerCase().includes(filter) ||
+          String(c.remote_port).includes(filter) ||
+          String(c.local_port).includes(filter))
+      : conns;
+
+    if (countLbl) countLbl.textContent = `${visible.length} connection${visible.length !== 1 ? 's' : ''}`;
+
+    if (!visible.length) {
+      tbody.innerHTML = '<tr><td class="data-table__empty" colspan="7">No connections match filter</td></tr>';
+      return;
+    }
+
+    const colorBg = { malicious: '#ff3b5c10', suspicious: '#ffb80010', legitimate: '' };
+    tbody.innerHTML = visible.slice(0, 200).map(c => {
+      const dot = c.classification === 'malicious' ? '#ff3b5c' :
+                  c.classification === 'suspicious' ? '#ffb800' : '#00ff88';
+      const dur = c.duration_seconds < 60
+        ? `${Math.round(c.duration_seconds)}s`
+        : `${Math.floor(c.duration_seconds / 60)}m ${Math.round(c.duration_seconds % 60)}s`;
+      return `<tr style="background:${colorBg[c.classification] || ''}" title="${c.classification_reason}">
+        <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dot}"></span></td>
+        <td class="text-mono text-xs">${c.local_addr}:${c.local_port}</td>
+        <td class="text-mono text-xs">${c.remote_addr || '—'}${c.remote_port ? ':' + c.remote_port : ''}</td>
+        <td class="text-xs" style="color:var(--text-muted)">${c.status}</td>
+        <td class="text-xs truncate" style="max-width:130px;color:var(--text-primary)" title="${c.process_path || c.process_name}">${c.process_name || '—'} <span style="color:var(--text-muted)">(${c.pid})</span></td>
+        <td class="text-xs" style="color:${dot}">${c.classification_reason}</td>
+        <td class="text-mono text-xs text-muted">${dur}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Hardware update handler (named so HTTP fetch + socket can share it) ──
+  function handleHardwareUpdate(data) {
+    if (!data) return;
+    const ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '—';
+    const tsEl = document.getElementById('hw-timestamp');
+    if (tsEl) tsEl.textContent = 'Live · ' + ts;
+
+    const cpu = data.cpu || {};
+    const ram = data.ram || {};
+    const disk = data.disk || {};
+    const summary = data.summary || {};
+
+    // KPI cards
+    const cpuPct = parseFloat(cpu.percent) || 0;
+    const ramPct = parseFloat(ram.percent) || 0;
+    document.getElementById('hw-cpu-pct').textContent = cpuPct.toFixed(1) + '%';
+    document.getElementById('hw-cpu-temp').textContent =
+      cpu.temperature != null ? `Temperature: ${cpu.temperature}°C` : 'Temperature: N/A';
+    document.getElementById('hw-ram-pct').textContent = ramPct.toFixed(1) + '%';
+    document.getElementById('hw-ram-detail').textContent =
+      `${(ram.used_gb || 0)} GB / ${(ram.total_gb || 0)} GB`;
+    document.getElementById('hw-disk-io').textContent =
+      `↑${(disk.total_write_mbps || 0).toFixed(1)} ↓${(disk.total_read_mbps || 0).toFixed(1)}`;
+    document.getElementById('hw-disk-detail').textContent =
+      `R: ${(disk.total_read_mbps || 0).toFixed(1)}  W: ${(disk.total_write_mbps || 0).toFixed(1)} MB/s`;
+    document.getElementById('hw-conn-total').textContent = summary.total_connections || 0;
+    document.getElementById('hw-conn-mal').textContent = (summary.malicious_connections || 0) + ' malicious';
+    document.getElementById('hw-conn-sus').textContent = (summary.suspicious_connections || 0) + ' suspicious';
+
+    // KPI card coloring
+    const cpuCard = document.getElementById('hw-kpi-cpu');
+    if (cpuCard) cpuCard.className = 'kpi-card' + (cpuPct >= 90 ? ' kpi-card--danger' : cpuPct >= 70 ? ' kpi-card--warning' : '');
+
+    // CPU freq
+    const freqEl = document.getElementById('hw-cpu-freq');
+    if (freqEl && cpu.frequency_mhz) freqEl.textContent = cpu.frequency_mhz + ' MHz';
+
+    // Swap
+    const swapEl = document.getElementById('hw-swap-label');
+    if (swapEl) swapEl.textContent = `Swap: ${(ram.swap_used_gb || 0).toFixed(1)}/${(ram.swap_total_gb || 0).toFixed(1)} GB`;
+
+    // Gauges — update data then call update('none') for instant re-render
+    if (cpuGauge) {
+      cpuGauge.data.datasets[0].data = [cpuPct, 100 - cpuPct];
+      const cc = cpuPct >= 90 ? '#ff3b5c' : cpuPct >= 70 ? '#ffb800' : '#00ff88';
+      cpuGauge.data.datasets[0].backgroundColor[0] = cc;
+      cpuGauge.update('none');
+    }
+    if (ramGauge) {
+      ramGauge.data.datasets[0].data = [ramPct, 100 - ramPct];
+      const rc = ramPct >= 90 ? '#ff3b5c' : ramPct >= 70 ? '#ffb800' : '#00ff88';
+      ramGauge.data.datasets[0].backgroundColor[0] = rc;
+      ramGauge.update('none');
+    }
+
+    // CPU history chart
+    if (cpuHistChart && cpu.history) {
+      const hist = cpu.history;
+      cpuHistChart.data.labels = hist.map(() => '');
+      cpuHistChart.data.datasets[0].data = hist;
+      cpuHistChart.update('none');
+    }
+
+    // Core bars
+    if (cpu.per_core) renderCoreBars(cpu.per_core);
+
+    // RAM procs
+    if (ram.top_processes) renderRamProcs(ram.top_processes);
+
+    // Drives
+    if (disk.drives) renderDrives(disk.drives, disk.suspicious_activity);
+
+    // Interfaces
+    if (data.network_interfaces) renderInterfaces(data.network_interfaces);
+
+    // Ports bar
+    if (data.open_ports) renderPortsBar(data.open_ports);
+
+    // Connections table
+    if (data.connections) {
+      allConnections = data.connections;
+      renderConnTable(allConnections);
+    }
+  }
+
+  // ── Socket.IO handler ─────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    const socket = typeof io !== 'undefined' ? io() : null;
+    if (!socket) {
+      console.warn('Socket.IO not available');
+      return;
+    }
+
+    socket.on('hardware_update', handleHardwareUpdate);
+
+    // Request initial snapshot via HTTP while waiting for first WS push
+    fetch('/api/hardware', { credentials: 'same-origin' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) handleHardwareUpdate(data); })
+      .catch(() => {});
+  });
+})();
+</script>
+{% endblock %}

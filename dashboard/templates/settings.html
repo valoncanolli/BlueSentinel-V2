@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-title">
+  <h1>Settings</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">Configuration</span>
+  <span class="page-title__sub text-mono" id="settings-saved-label"></span>
+</div>
+
+<div class="settings-grid">
+
+  <!-- ══════════ AI PROVIDER ══════════ -->
+  <div class="settings-card">
+    <div class="settings-card__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        AI Provider
+      </div>
+    </div>
+    <div class="settings-card__body">
+      <div class="form-group">
+        <label class="form-label">Active Provider</label>
+        <div class="settings-provider-toggle">
+          <button id="btn-openai" class="provider-btn {% if ai_provider == 'openai' %}active{% endif %}"
+                  onclick="setProvider('openai')">
+            OpenAI
+            <div class="text-xs text-muted" style="margin-top:2px">GPT-4o</div>
+          </button>
+          <button id="btn-claude" class="provider-btn {% if ai_provider == 'claude' %}active{% endif %}"
+                  onclick="setProvider('claude')">
+            Anthropic
+            <div class="text-xs text-muted" style="margin-top:2px">Claude Sonnet</div>
+          </button>
+        </div>
+        <input type="hidden" id="ai-provider-value" value="{{ ai_provider }}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Current Model</label>
+        <div class="form-control" style="font-family:var(--font-data);font-size:0.82rem;background:rgba(0,0,0,0.2);color:var(--accent-cyan)" id="current-model-display">
+          {% if ai_provider == 'openai' %}{{ openai_model }}{% else %}{{ anthropic_model }}{% endif %}
+        </div>
+      </div>
+
+      <!-- OpenAI section -->
+      <div id="openai-section" style="{{ '' if ai_provider == 'openai' else 'display:none' }}">
+        <div class="form-group">
+          <label class="form-label" for="openai-key">OpenAI API Key</label>
+          <div class="api-key-wrap">
+            <input class="form-control form-control-masked" id="openai-key" type="password"
+                   placeholder="sk-…" value="" autocomplete="new-password">
+            <button class="api-key-toggle" onclick="toggleKeyVisibility('openai-key', this)" type="button" aria-label="Toggle key visibility">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="openai-model">Model</label>
+          <select class="form-control" id="openai-model">
+            <option value="gpt-4o" {% if openai_model == 'gpt-4o' %}selected{% endif %}>gpt-4o (recommended)</option>
+            <option value="gpt-4-turbo" {% if openai_model == 'gpt-4-turbo' %}selected{% endif %}>gpt-4-turbo</option>
+            <option value="gpt-4o-mini" {% if openai_model == 'gpt-4o-mini' %}selected{% endif %}>gpt-4o-mini (fast)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Claude section -->
+      <div id="claude-section" style="{{ '' if ai_provider == 'claude' else 'display:none' }}">
+        <div class="form-group">
+          <label class="form-label" for="claude-key">Anthropic API Key</label>
+          <div class="api-key-wrap">
+            <input class="form-control form-control-masked" id="claude-key" type="password"
+                   placeholder="sk-ant-…" value="" autocomplete="new-password">
+            <button class="api-key-toggle" onclick="toggleKeyVisibility('claude-key', this)" type="button" aria-label="Toggle key visibility">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="claude-model">Model</label>
+          <select class="form-control" id="claude-model">
+            <option value="claude-sonnet-4-5" {% if anthropic_model == 'claude-sonnet-4-5' %}selected{% endif %}>claude-sonnet-4-5 (recommended)</option>
+            <option value="claude-opus-4-5" {% if anthropic_model == 'claude-opus-4-5' %}selected{% endif %}>claude-opus-4-5 (powerful)</option>
+            <option value="claude-haiku-3-5" {% if anthropic_model == 'claude-haiku-3-5' %}selected{% endif %}>claude-haiku-3-5 (fast)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:0.75rem;margin-top:0.75rem">
+        <button class="btn btn--primary" onclick="testAiProvider()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Test Connection
+        </button>
+        <div id="ai-test-result" class="text-xs" style="align-self:center"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ THREAT INTELLIGENCE ══════════ -->
+  <div class="settings-card">
+    <div class="settings-card__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Threat Intelligence APIs
+      </div>
+    </div>
+    <div class="settings-card__body">
+      <div class="form-group">
+        <label class="form-label" for="vt-keys">VirusTotal API Keys (comma-separated)</label>
+        <div class="api-key-wrap">
+          <input class="form-control form-control-masked" id="vt-keys" type="password"
+                 placeholder="key1,key2,key3…" autocomplete="new-password">
+          <button class="api-key-toggle" onclick="toggleKeyVisibility('vt-keys', this)" type="button" aria-label="Toggle">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="abuseipdb-key">AbuseIPDB API Key</label>
+        <div class="api-key-wrap">
+          <input class="form-control form-control-masked" id="abuseipdb-key" type="password"
+                 placeholder="…" autocomplete="new-password">
+          <button class="api-key-toggle" onclick="toggleKeyVisibility('abuseipdb-key', this)" type="button" aria-label="Toggle">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="otx-key">AlienVault OTX API Key</label>
+        <div class="api-key-wrap">
+          <input class="form-control form-control-masked" id="otx-key" type="password"
+                 placeholder="…" autocomplete="new-password">
+          <button class="api-key-toggle" onclick="toggleKeyVisibility('otx-key', this)" type="button" aria-label="Toggle">👁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="shodan-key">Shodan API Key</label>
+        <div class="api-key-wrap">
+          <input class="form-control form-control-masked" id="shodan-key" type="password"
+                 placeholder="…" autocomplete="new-password">
+          <button class="api-key-toggle" onclick="toggleKeyVisibility('shodan-key', this)" type="button" aria-label="Toggle">👁</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SCAN THRESHOLDS ══════════ -->
+  <div class="settings-card">
+    <div class="settings-card__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        Scan Thresholds
+      </div>
+    </div>
+    <div class="settings-card__body">
+      <div class="form-group">
+        <label class="form-label">Beaconing Min Connections</label>
+        <div class="threshold-row">
+          <input type="range" class="form-range w-full" id="beacon-min-conn"
+                 min="3" max="20" value="6" oninput="document.getElementById('beacon-min-conn-val').textContent=this.value">
+          <span class="threshold-value" id="beacon-min-conn-val">6</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Beaconing Jitter Threshold</label>
+        <div class="threshold-row">
+          <input type="range" class="form-range w-full" id="beacon-jitter"
+                 min="1" max="50" value="20" oninput="document.getElementById('beacon-jitter-val').textContent=this.value+'%'">
+          <span class="threshold-value" id="beacon-jitter-val">20%</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confidence Threshold</label>
+        <div class="threshold-row">
+          <input type="range" class="form-range w-full" id="conf-threshold"
+                 min="30" max="99" value="70" oninput="document.getElementById('conf-threshold-val').textContent=this.value+'%'">
+          <span class="threshold-value" id="conf-threshold-val">70%</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">VirusTotal Malicious Threshold (engines)</label>
+        <div class="threshold-row">
+          <input type="range" class="form-range w-full" id="vt-threshold"
+                 min="1" max="10" value="3" oninput="document.getElementById('vt-threshold-val').textContent=this.value">
+          <span class="threshold-value" id="vt-threshold-val">3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SIEM EXPORT ══════════ -->
+  <div class="settings-card">
+    <div class="settings-card__header">
+      <div class="panel__title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        SIEM Export
+      </div>
+    </div>
+    <div class="settings-card__body">
+      <div class="form-group">
+        <label class="form-label" for="siem-host">SIEM Host / IP</label>
+        <input class="form-control" id="siem-host" type="text" placeholder="192.168.1.100"
+               style="font-family:var(--font-data)">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="siem-port">Syslog UDP Port</label>
+        <input class="form-control" id="siem-port" type="number" value="514" min="1" max="65535"
+               style="font-family:var(--font-data)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Export Format</label>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <label class="toggle-switch">
+            <input type="checkbox" id="export-json" checked>
+            <span class="toggle-slider"></span>
+            <span class="text-xs">ELK/OpenSearch JSON</span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="export-cef" checked>
+            <span class="toggle-slider"></span>
+            <span class="text-xs">CEF flat file</span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="export-syslog">
+            <span class="toggle-slider"></span>
+            <span class="text-xs">Syslog UDP</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /settings-grid -->
+
+<!-- ══════════ DEMO & TESTING ══════════ -->
+<div class="settings-card" style="margin-top:1.5rem">
+  <div class="settings-card__header">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    Demo &amp; Testing
+  </div>
+  <div class="settings-card__body">
+    <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:1rem">
+      Load pre-built demo scan data to explore the dashboard without running a live scan.
+      Useful for screenshots, walkthroughs, and testing AI analysis output.
+    </p>
+    <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+      <button class="btn btn--primary" onclick="loadDemoData()" id="loadDemoBtn">
+        &#11015; Load Demo Data
+      </button>
+      <span id="demo-load-result" style="font-size:0.82rem;color:var(--text-muted)"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Save button -->
+<div style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1.5rem">
+  <button class="btn" onclick="location.reload()">Reset</button>
+  <button class="btn btn--primary" onclick="saveSettings()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    Save Settings
+  </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  BS_Realtime.connect();
+});
+
+// ── Provider toggle ─────────────────────────────────────────────────────
+function setProvider(provider) {
+  document.getElementById('ai-provider-value').value = provider;
+  document.getElementById('btn-openai').classList.toggle('active', provider === 'openai');
+  document.getElementById('btn-claude').classList.toggle('active', provider === 'claude');
+  document.getElementById('openai-section').style.display = provider === 'openai' ? '' : 'none';
+  document.getElementById('claude-section').style.display = provider === 'claude' ? '' : 'none';
+
+  const modelMap = { openai: 'gpt-4o', claude: 'claude-sonnet-4-5' };
+  const modelEl = document.getElementById('current-model-display');
+  if (modelEl) modelEl.textContent = modelMap[provider] || '—';
+}
+
+// ── Toggle key visibility ────────────────────────────────────────────────
+function toggleKeyVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.textContent = input.type === 'password' ? '👁' : '🙈';
+}
+
+// ── Test AI provider ─────────────────────────────────────────────────────
+function testAiProvider() {
+  const resultEl = document.getElementById('ai-test-result');
+  resultEl.innerHTML = '<span style="color:var(--accent-cyan)">Testing…</span>';
+
+  fetch('/api/test-provider', {
+    method:      'POST',
+    credentials: 'same-origin',
+    headers:     { 'Content-Type': 'application/json' },
+    body:        JSON.stringify({}),
+  })
+    .then(r => r.json())
+    .then(d => {
+      if (d.status === 'success') {
+        resultEl.innerHTML = `<span style="color:var(--success)">✓ Connected — ${d.provider}/${d.model} (${d.latency_ms}ms)</span>`;
+      } else {
+        resultEl.innerHTML = `<span style="color:var(--danger)">✗ Error: ${d.error || 'Connection failed'}</span>`;
+      }
+    })
+    .catch(err => {
+      resultEl.innerHTML = `<span style="color:var(--danger)">✗ Request failed: ${err.message}</span>`;
+    });
+}
+
+// ── Save settings ────────────────────────────────────────────────────────
+function saveSettings() {
+  const payload = {
+    ai_provider:       document.getElementById('ai-provider-value').value,
+    openai_api_key:    document.getElementById('openai-key').value,
+    anthropic_api_key: document.getElementById('claude-key').value,
+  };
+
+  // Only send non-empty keys to avoid overwriting existing values
+  Object.keys(payload).forEach(k => { if (!payload[k]) delete payload[k]; });
+
+  fetch('/api/save-settings', {
+    method:      'POST',
+    credentials: 'same-origin',
+    headers:     { 'Content-Type': 'application/json' },
+    body:        JSON.stringify(payload),
+  })
+    .then(r => r.json())
+    .then(d => {
+      const label = document.getElementById('settings-saved-label');
+      if (d.status === 'saved') {
+        if (label) label.innerHTML = '<span style="color:var(--success)">✓ Settings saved</span>';
+        BS_Realtime.showToast('Success', 'Settings Saved', 'Configuration updated. Restart may be required for some changes.', 5000);
+      } else {
+        if (label) label.innerHTML = `<span style="color:var(--danger)">✗ ${d.error || 'Save failed'}</span>`;
+        BS_Realtime.showToast('High', 'Save Failed', d.error || 'Could not write settings.', 6000);
+      }
+    })
+    .catch(err => {
+      BS_Realtime.showToast('High', 'Save Error', err.message, 6000);
+    });
+}
+</script>
+{% endblock %}

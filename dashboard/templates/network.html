@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Network{% endblock %}
+
+{% block content %}
+{% set beacons = data.get('beaconing_alerts', []) if data else [] %}
+{% set network = data.get('network_findings', []) if data else [] %}
+
+<div class="page-title">
+  <h1>Network Analysis</h1>
+  <span class="page-title__sep">/</span>
+  <span style="color:var(--text-muted);font-size:0.82rem">Traffic &amp; Beaconing</span>
+  <span class="page-title__sub text-mono">{{ beacons | length }} beaconing flows detected</span>
+</div>
+
+<!-- ══════════ KPI ROW ══════════ -->
+<div class="kpi-grid mb-lg">
+  <div class="kpi-card">
+    <div class="kpi-card__label">Beaconing Flows</div>
+    <div class="kpi-card__value kpi-card__value--{{ 'danger' if beacons | length > 0 else 'success' }}">{{ beacons | length }}</div>
+    <div class="kpi-card__sub">Suspicious C2 patterns</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-card__label">High Confidence</div>
+    <div class="kpi-card__value kpi-card__value--danger">{{ beacons | selectattr('confidence', 'ge', 85) | list | length }}</div>
+    <div class="kpi-card__sub">Confidence ≥ 85%</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-card__label">Unique IPs</div>
+    <div class="kpi-card__value">{{ beacons | map(attribute='dst_ip') | unique | list | length }}</div>
+    <div class="kpi-card__sub">Distinct destinations</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-card__label">IOC Matches</div>
+    <div class="kpi-card__value kpi-card__value--danger">{{ beacons | selectattr('is_ioc_match') | list | length }}</div>
+    <div class="kpi-card__sub">Known bad IPs</div>
+  </div>
+</div>
+
+<!-- ══════════ BEACONING CHART (full width) ══════════ -->
+<div class="panel mb-lg">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/></svg>
+      Beaconing Confidence — Top Suspicious IPs
+    </div>
+    <div class="panel__actions text-xs text-muted">FFT + jitter analysis</div>
+  </div>
+  <div class="panel__body" style="height:300px;position:relative">
+    <canvas id="full-beaconing-canvas" aria-label="Full beaconing chart"></canvas>
+  </div>
+</div>
+
+<!-- ══════════ CONNECTION TABLE ══════════ -->
+<div class="panel mb-lg">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      Suspicious Connections
+    </div>
+    <div class="panel__actions">
+      <span class="text-xs text-muted">{{ beacons | length }} connections</span>
+    </div>
+  </div>
+  <div class="panel__body--flush" style="overflow-x:auto">
+    <table class="data-table" aria-label="Connection details">
+      <thead>
+        <tr>
+          <th>Source IP</th>
+          <th>Destination IP</th>
+          <th>Port</th>
+          <th>Connections</th>
+          <th>Avg IAT (s)</th>
+          <th>Jitter</th>
+          <th>Confidence</th>
+          <th>Total Bytes</th>
+          <th>VT Reputation</th>
+          <th>IOC Match</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in beacons | sort(attribute='confidence', reverse=True) %}
+        <tr>
+          <td class="text-mono text-xs">{{ b.get('src_ip', '—') }}</td>
+          <td class="text-mono text-xs text-cyan">{{ b.get('dst_ip', '—') }}</td>
+          <td class="text-mono text-xs">{{ b.get('dst_port', '—') }}</td>
+          <td class="text-mono text-xs">{{ b.get('connection_count', '—') }}</td>
+          <td class="text-mono text-xs">{{ '%.2f' % b.get('mean_iat_seconds', 0) }}</td>
+          <td class="text-mono text-xs">
+            {% set jitter = b.get('jitter', 0) %}
+            <span class="{{ 'text-ok' if jitter < 0.1 else ('text-warn' if jitter < 0.2 else 'text-danger') }}">
+              {{ '%.3f' % jitter }}
+            </span>
+          </td>
+          <td>
+            {% set conf = b.get('confidence', 0) %}
+            <div style="display:flex;align-items:center;gap:0.5rem">
+              <div class="progress-bar-wrap" style="width:60px;flex-shrink:0">
+                <div class="progress-bar-fill" style="width:{{ conf }}%;background:{{ '#ff3b5c' if conf >= 85 else ('#ffb800' if conf >= 70 else '#00d4ff') }}"></div>
+              </div>
+              <span class="text-mono text-xs {{ 'text-danger' if conf >= 85 else ('text-warn' if conf >= 70 else 'text-cyan') }}">
+                {{ '%.1f' % conf }}%
+              </span>
+            </div>
+          </td>
+          <td class="text-mono text-xs">{{ '{:,}'.format(b.get('total_bytes', 0)) }}</td>
+          <td>
+            {% if b.get('is_ioc_match') %}
+              <span class="badge badge--critical">MALICIOUS</span>
+            {% else %}
+              <span class="text-muted text-xs">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if b.get('ioc_source') %}
+              <span class="badge badge--high">{{ b['ioc_source'] }}</span>
+            {% else %}
+              <span class="text-muted text-xs">Unknown</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="data-table__empty" colspan="10">No beaconing connections detected</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ DNS QUERY LOG ══════════ -->
+<div class="panel mb-lg">
+  <div class="panel__header">
+    <div class="panel__title">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      DNS Query Analysis
+    </div>
+    <div class="panel__actions text-xs text-muted">Suspicious domains flagged by YARA / IOC</div>
+  </div>
+  <div class="panel__body--flush" style="overflow-x:auto">
+    <table class="data-table" aria-label="DNS query log">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Query Type</th>
+          <th>Source Process</th>
+          <th>First Seen</th>
+          <th>Count</th>
+          <th>Flag</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set dns_data = data.get('network_findings', []) if data else [] %}
+        {% for entry in dns_data if entry.get('type') == 'dns' %}
+        <tr>
+          <td class="text-mono text-xs text-cyan">{{ entry.get('domain', '—') }}</td>
+          <td class="text-mono text-xs">{{ entry.get('query_type', 'A') }}</td>
+          <td class="text-mono text-xs">{{ entry.get('process', '—') }}</td>
+          <td class="text-mono text-xs text-muted">{{ entry.get('first_seen', '—')[:19] }}</td>
+          <td class="text-mono text-xs">{{ entry.get('count', 1) }}</td>
+          <td>
+            {% if entry.get('suspicious') %}
+              <span class="badge badge--{{ entry.get('severity', 'medium') | lower }}">{{ entry.get('flag', 'SUSPICIOUS') }}</span>
+            {% else %}
+              <span class="text-muted text-xs">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="data-table__empty" colspan="6">No DNS anomalies detected</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  BS_Realtime.connect();
+  fetch('/api/beaconing', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(beacons => {
+      window._beaconingChart = BS_Charts.initBeaconingChart('full-beaconing-canvas', beacons);
+    })
+    .catch(() => {
+      window._beaconingChart = BS_Charts.initBeaconingChart('full-beaconing-canvas', []);
+    });
+});
+</script>
+{% endblock %}

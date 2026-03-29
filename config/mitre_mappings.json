@@ -1,0 +1,321 @@
+{
+  "_comment": "BlueSentinel v2.0 MITRE ATT&CK technique mappings — 35 techniques across all 14 tactics",
+  "_version": "ATT&CK v14",
+  "techniques": [
+    {
+      "technique_id": "T1566",
+      "technique_name": "Phishing",
+      "tactic": "Initial Access",
+      "tactic_id": "TA0001",
+      "description": "Phishing emails or spear-phishing with malicious attachments or links.",
+      "detection_trigger": "office_spawn_shell",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1190",
+      "technique_name": "Exploit Public-Facing Application",
+      "tactic": "Initial Access",
+      "tactic_id": "TA0001",
+      "description": "Exploitation of a weakness in an internet-facing service.",
+      "detection_trigger": "network_anomaly",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1078",
+      "technique_name": "Valid Accounts",
+      "tactic": "Initial Access",
+      "tactic_id": "TA0001",
+      "description": "Use of legitimate credentials to gain access.",
+      "detection_trigger": "credential_anomaly",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1059",
+      "technique_name": "Command and Scripting Interpreter",
+      "tactic": "Execution",
+      "tactic_id": "TA0002",
+      "description": "Use of command-line interpreters (PowerShell, cmd, bash) to execute commands.",
+      "detection_trigger": "encoded_powershell",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1047",
+      "technique_name": "Windows Management Instrumentation",
+      "tactic": "Execution",
+      "tactic_id": "TA0002",
+      "description": "Adversaries may abuse WMI to execute malicious commands.",
+      "detection_trigger": "wmi_execution",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1204",
+      "technique_name": "User Execution",
+      "tactic": "Execution",
+      "tactic_id": "TA0002",
+      "description": "Adversaries may rely on user execution to run malicious files.",
+      "detection_trigger": "unusual_prefetch",
+      "severity": "Medium"
+    },
+    {
+      "technique_id": "T1547",
+      "technique_name": "Boot/Logon Autostart Execution",
+      "tactic": "Persistence",
+      "tactic_id": "TA0003",
+      "description": "Persistence via Registry run keys, startup folder, or scheduled tasks.",
+      "detection_trigger": "registry_modification",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1053",
+      "technique_name": "Scheduled Task/Job",
+      "tactic": "Persistence",
+      "tactic_id": "TA0003",
+      "description": "Use of scheduled tasks for persistence or privilege escalation.",
+      "detection_trigger": "yara_scheduled_tasks",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1505",
+      "technique_name": "Server Software Component",
+      "tactic": "Persistence",
+      "tactic_id": "TA0003",
+      "description": "Adversaries may install malicious web shells or server plugins.",
+      "detection_trigger": "yara_backdoor",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1548",
+      "technique_name": "Abuse Elevation Control Mechanism",
+      "tactic": "Privilege Escalation",
+      "tactic_id": "TA0004",
+      "description": "Bypassing User Account Control or exploiting SUID/SGID bits.",
+      "detection_trigger": "uac_bypass",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1055",
+      "technique_name": "Process Injection",
+      "tactic": "Privilege Escalation",
+      "tactic_id": "TA0004",
+      "description": "Injecting code into another process to elevate privileges or evade detection.",
+      "detection_trigger": "process_hollowing",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1134",
+      "technique_name": "Access Token Manipulation",
+      "tactic": "Privilege Escalation",
+      "tactic_id": "TA0004",
+      "description": "Manipulating access tokens to escalate privileges or impersonate users.",
+      "detection_trigger": "token_impersonation",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1562",
+      "technique_name": "Impair Defenses",
+      "tactic": "Defense Evasion",
+      "tactic_id": "TA0005",
+      "description": "Disabling or modifying security tools, logging, or monitoring.",
+      "detection_trigger": "amsi_bypass",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1070",
+      "technique_name": "Indicator Removal",
+      "tactic": "Defense Evasion",
+      "tactic_id": "TA0005",
+      "description": "Clearing logs, deleting files, or removing indicators of compromise.",
+      "detection_trigger": "event_log_cleared",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1218",
+      "technique_name": "System Binary Proxy Execution",
+      "tactic": "Defense Evasion",
+      "tactic_id": "TA0005",
+      "description": "Using signed binaries to execute malicious code (LOLBins).",
+      "detection_trigger": "lolbin",
+      "severity": "Medium"
+    },
+    {
+      "technique_id": "T1036",
+      "technique_name": "Masquerading",
+      "tactic": "Defense Evasion",
+      "tactic_id": "TA0005",
+      "description": "Renaming or modifying files to appear legitimate.",
+      "detection_trigger": "masquerade_detection",
+      "severity": "Medium"
+    },
+    {
+      "technique_id": "T1003",
+      "technique_name": "OS Credential Dumping",
+      "tactic": "Credential Access",
+      "tactic_id": "TA0006",
+      "description": "Extracting credentials from LSASS, SAM, or NTDS.dit.",
+      "detection_trigger": "lsass_access",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1110",
+      "technique_name": "Brute Force",
+      "tactic": "Credential Access",
+      "tactic_id": "TA0006",
+      "description": "Attempting multiple password combinations to gain access.",
+      "detection_trigger": "auth_failure_spike",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1040",
+      "technique_name": "Network Sniffing",
+      "tactic": "Credential Access",
+      "tactic_id": "TA0006",
+      "description": "Capturing network traffic to intercept credentials.",
+      "detection_trigger": "promiscuous_mode",
+      "severity": "Medium"
+    },
+    {
+      "technique_id": "T1082",
+      "technique_name": "System Information Discovery",
+      "tactic": "Discovery",
+      "tactic_id": "TA0007",
+      "description": "Collecting information about the OS, hardware, and configuration.",
+      "detection_trigger": "system_enum",
+      "severity": "Low"
+    },
+    {
+      "technique_id": "T1046",
+      "technique_name": "Network Service Discovery",
+      "tactic": "Discovery",
+      "tactic_id": "TA0007",
+      "description": "Scanning the network to identify open ports and services.",
+      "detection_trigger": "network_scan",
+      "severity": "Medium"
+    },
+    {
+      "technique_id": "T1083",
+      "technique_name": "File and Directory Discovery",
+      "tactic": "Discovery",
+      "tactic_id": "TA0007",
+      "description": "Enumerating files and directories to locate sensitive data.",
+      "detection_trigger": "file_enum",
+      "severity": "Low"
+    },
+    {
+      "technique_id": "T1021",
+      "technique_name": "Remote Services",
+      "tactic": "Lateral Movement",
+      "tactic_id": "TA0008",
+      "description": "Using remote services like RDP, SMB, or SSH for lateral movement.",
+      "detection_trigger": "lateral_rdp_smb",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1550",
+      "technique_name": "Use Alternate Authentication Material",
+      "tactic": "Lateral Movement",
+      "tactic_id": "TA0008",
+      "description": "Pass-the-Hash, Pass-the-Ticket, or using cached credentials.",
+      "detection_trigger": "pass_the_hash",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1570",
+      "technique_name": "Lateral Tool Transfer",
+      "tactic": "Lateral Movement",
+      "tactic_id": "TA0008",
+      "description": "Copying tools to remote systems via SMB, PsExec, or other means.",
+      "detection_trigger": "psexec_lateral",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1005",
+      "technique_name": "Data from Local System",
+      "tactic": "Collection",
+      "tactic_id": "TA0009",
+      "description": "Collecting data stored locally on the compromised system.",
+      "detection_trigger": "file_collection",
+      "severity": "Medium"
+    },
+    {
+      "technique_id": "T1113",
+      "technique_name": "Screen Capture",
+      "tactic": "Collection",
+      "tactic_id": "TA0009",
+      "description": "Capturing screenshots or screen content.",
+      "detection_trigger": "screen_capture",
+      "severity": "Medium"
+    },
+    {
+      "technique_id": "T1071",
+      "technique_name": "Application Layer Protocol",
+      "tactic": "Command and Control",
+      "tactic_id": "TA0011",
+      "description": "Using standard application layer protocols (HTTP, DNS, HTTPS) for C2.",
+      "detection_trigger": "confirmed_beaconing",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1071.004",
+      "technique_name": "DNS",
+      "tactic": "Command and Control",
+      "tactic_id": "TA0011",
+      "description": "DNS tunneling for C2 communication.",
+      "detection_trigger": "dns_tunneling",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1095",
+      "technique_name": "Non-Application Layer Protocol",
+      "tactic": "Command and Control",
+      "tactic_id": "TA0011",
+      "description": "Using ICMP, UDP, or raw sockets for C2.",
+      "detection_trigger": "non_standard_c2",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1041",
+      "technique_name": "Exfiltration Over C2 Channel",
+      "tactic": "Exfiltration",
+      "tactic_id": "TA0010",
+      "description": "Exfiltrating data using the same channel as C2 communication.",
+      "detection_trigger": "data_exfiltration",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1048",
+      "technique_name": "Exfiltration Over Alternative Protocol",
+      "tactic": "Exfiltration",
+      "tactic_id": "TA0010",
+      "description": "Using protocols like FTP, SMB, or SMTP for data exfiltration.",
+      "detection_trigger": "alt_protocol_exfil",
+      "severity": "High"
+    },
+    {
+      "technique_id": "T1486",
+      "technique_name": "Data Encrypted for Impact",
+      "tactic": "Impact",
+      "tactic_id": "TA0040",
+      "description": "Encrypting files to deny access — ransomware.",
+      "detection_trigger": "yara_ransomware",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1490",
+      "technique_name": "Inhibit System Recovery",
+      "tactic": "Impact",
+      "tactic_id": "TA0040",
+      "description": "Deleting shadow copies and backups to prevent recovery.",
+      "detection_trigger": "vssadmin_delete",
+      "severity": "Critical"
+    },
+    {
+      "technique_id": "T1583",
+      "technique_name": "Acquire Infrastructure",
+      "tactic": "Resource Development",
+      "tactic_id": "TA0042",
+      "description": "Acquiring infrastructure (domains, servers) for operations.",
+      "detection_trigger": "ioc_match_c2",
+      "severity": "Medium"
+    }
+  ]
+}
